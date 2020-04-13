@@ -1,28 +1,44 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-app>
+    <v-app-bar style="flex: 0 1 auto">
+      <v-tabs v-model="tab">
+        <v-tab>Model</v-tab>
+        <v-tab>Papers</v-tab>
+      </v-tabs>
+
+      <v-btn href="https://github.com/Eclion/web-ca/" target="_blank" text>
+        <span class="mr-2">Github repo</span>
+        <v-icon>mdi-open-in-new</v-icon>
+      </v-btn>
+    </v-app-bar>
+    <v-container>
+    <v-tabs-items v-model="tab">
+      <v-tab-item>
+        <Model/>
+      </v-tab-item>
+      <v-tab-item>
+        <PaperList/>
+      </v-tab-item>
+    </v-tabs-items>
+    </v-container>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import PaperList from './components/PaperList'
+import Model from './components/Model'
 
 export default {
   name: 'App',
+
   components: {
-    HelloWorld
+    Model, PaperList
+  },
+
+  data () {
+    return {
+      tab: null
+    }
   }
 }
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
