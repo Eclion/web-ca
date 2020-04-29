@@ -17,9 +17,9 @@
 </template>
 
 <script>
-import MainControls from './MainControls'
-import Parameters from './Parameters'
-import SimulationDisplay from './SimulationDisplay'
+import MainControls from '@/views/MainControls'
+import Parameters from '@/views/Parameters'
+import SimulationDisplay from '@/views/SimulationDisplay'
 
 export default {
   components: {

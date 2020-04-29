@@ -25,8 +25,8 @@
 </template>
 
 <script>
-import PaperList from './components/PaperList'
-import Model from './components/Model'
+import PaperList from '@/views/PaperList'
+import Model from '@/views/Model'
 
 export default {
   name: 'App',

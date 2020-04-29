@@ -1,3 +1,80 @@
 <template>
-  <canvas>
+  <!-- include id in the ref -->
+  <canvas ref="dish"></canvas>
 </template>
+
+<script>
+export default {
+  // https://github.com/escodebar/life/blob/master/src/components/Game.vue
+  data () {
+    return {
+      colorMap: { 0: '#333333', 1: '#FFFFFF' }
+    }
+  },
+
+  mounted () {
+    this.clear()
+  },
+
+  propos: {
+    id: {
+      type: Number,
+      default: 0
+    }
+  },
+
+  methods: {
+    clear () {
+      var cells = Array(300).fill().map(() => Array(300).fill().map(() => Array(1).fill(0)))
+      this.draw(cells)
+    },
+
+    // use vuex instead of argument for cells & colorMap
+    draw (cells) {
+      var absciss = cells.length
+      if (absciss <= 0) return
+      var ordinate = cells[0].length
+
+      var dish = this.$refs.dish
+      var context = dish.getContext('2d')
+      var cellZoom = Math.max(1,
+        Math.floor(dish.parentElement.clientWidth / absciss)
+      )
+
+      dish.width = absciss * cellZoom
+      dish.height = ordinate * cellZoom
+
+      for (var i = 0; i < absciss; i++) {
+        for (var j = 0; j < ordinate; j++) {
+          var displayedCell = 0
+          for (var k = 0; k < cells[i][j].length; k++) {
+            var cell = cells[i][j][k]
+            if (cell !== 0) {
+              displayedCell = cell
+              break
+            }
+          }
+          context.fillStyle = this.colorMap[displayedCell]
+          var x = i * cellZoom
+          var y = j * cellZoom
+          context.fillRect(x, y, cellZoom, cellZoom)
+        }
+      }
+    }
+  },
+
+  created () {
+    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
+    this.unwatch = this.$store.watch(
+      (state, getters) => getters['simulation/cells'],
+      (newVal, oldVal) => {
+        console.log('updated')
+        this.draw(newVal)
+      }
+    )
+  },
+  beforeDestroy () {
+    this.unwatch()
+  }
+}
+</script>
