@@ -14,7 +14,7 @@
       <v-btn-toggle>
         <v-btn color="cyan" depressed>run</v-btn>
         <v-btn color="cyan" depressed>stop</v-btn>
-        <v-btn color="cyan" depressed @click="test()">reset</v-btn>
+        <v-btn color="cyan" depressed @click="resetSimulation()">reset</v-btn>
       </v-btn-toggle>
     </v-col>
   </v-row>
@@ -30,7 +30,7 @@ export default {
   },
 
   methods: {
-    test () {
+    resetSimulation () {
       this.$store.dispatch('simulation/reset')
     }
   },

@@ -22,35 +22,7 @@ export default {
       context.commit('setSimulationStatus', 'stopped')
     },
     reset ({ commit, state }) {
-      commit('resetGrid', {
-        // TODO: move to the parameter store
-        dish_settings: {
-          width: 100,
-          height: 100,
-          depth: 1
-        },
-        cell_types: [
-          {
-            name: 'empty',
-            color: '#000000',
-            rules: [
-              'if live neighbors between 2 to 3, becomes live'
-            ]
-          },
-          {
-            name: 'live',
-            color: '#FFFFFF',
-            rules: [
-              'if live neighbors less than 3, becomes empty, else live',
-              'if neighbors more than 3, then empty, else live'
-            ],
-            distribution: {
-              type: 'random',
-              count: 500
-            }
-          }
-        ]
-      })
+      commit('resetGrid', this.getters['parameters/parameters'])
       commit('setSimulationStatus', 'resetted')
     }
   },

@@ -72,9 +72,14 @@ export default {
         this.draw(newVal)
       }
     )
+    // TODO: if not running then
+    this.$store.dispatch('simulation/reset')
+    // else
+    //   load simulation cache
   },
   beforeDestroy () {
     this.unwatch()
+    console.clear()
   }
 }
 </script>
