@@ -43,6 +43,12 @@ export default {
         colorMap[index] = state.cell_types[index].color
       }
       return colorMap
+    },
+    cell_types: (state) => {
+      return state.cell_types
+    },
+    dish_settings: (state) => {
+      return state.dish_settings
     }
   },
   mutations: {

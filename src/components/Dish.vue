@@ -25,7 +25,13 @@ export default {
 
   methods: {
     clear () {
-      var cells = Array(300).fill().map(() => Array(300).fill().map(() => Array(1).fill(0)))
+      var dishSettings = this.$store.getters['parameters/dish_settings']
+      console.log()
+      var cells = Array(dishSettings.width)
+        .fill()
+        .map(() => Array(dishSettings.height)
+          .fill()
+          .map(() => Array(dishSettings.depth).fill(0)))
       this.draw(cells)
     },
 
@@ -37,6 +43,7 @@ export default {
 
       var dish = this.$refs.dish
       var context = dish.getContext('2d')
+      // TODO: give warnings if the fraction is not round number
       var cellZoom = Math.max(1,
         Math.floor(dish.parentElement.clientWidth / absciss)
       )
