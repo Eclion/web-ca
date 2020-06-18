@@ -12,6 +12,9 @@ export default {
     },
     resetGrid (state, parameters) {
       state.grid.init(parameters)
+    },
+    setCells (state, cells) {
+      state.grid.cells = cells
     }
   },
   actions: {
@@ -29,6 +32,9 @@ export default {
   getters: {
     cells: (state) => {
       return state.grid.cells
+    },
+    grid: (state) => { // TODO: check if really necessary
+      return state.grid
     }
   }
 }
