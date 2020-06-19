@@ -12,17 +12,6 @@ export default {
     }
   },
 
-  mounted () {
-    this.clear()
-  },
-
-  propos: {
-    id: {
-      type: Number,
-      default: 0
-    }
-  },
-
   methods: {
     clear () {
       var dishSettings = this.$store.getters['parameters/dish_settings']
@@ -68,25 +57,6 @@ export default {
         }
       }
     }
-  },
-
-  created () {
-    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
-    this.unwatch = this.$store.watch(
-      (state, getters) => getters['simulation/cells'],
-      (newVal, oldVal) => {
-        console.log('updated')
-        this.draw(newVal)
-      }
-    )
-    // TODO: if not running then
-    this.$store.dispatch('simulation/reset')
-    // else
-    //   load simulation cache
-  },
-  beforeDestroy () {
-    this.unwatch()
-    console.clear()
   }
 }
 </script>
