@@ -12,6 +12,13 @@ export default {
     }
   },
 
+  props: {
+    id: {
+      type: Number,
+      default: 0
+    }
+  },
+
   methods: {
     clear () {
       var dishSettings = this.$store.getters['parameters/dish_settings']
@@ -57,6 +64,22 @@ export default {
         }
       }
     }
+  },
+  created () {
+    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
+    this.unwatch = this.$store.watch(
+      (state, getters) => {
+        return getters['simulations/cells'](this.id)
+      },
+      (newVal, oldVal) => {
+        console.log('updated')
+        this.draw(newVal)
+      }
+    )
+  },
+  beforeDestroy () {
+    this.unwatch()
+    console.clear()
   }
 }
 </script>

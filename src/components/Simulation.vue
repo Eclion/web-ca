@@ -1,6 +1,22 @@
 <template>
-    <!-- add buttons here -->
-    <Dish/>
+  <v-col>
+    <v-row>
+      <v-btn-toggle>
+        <v-btn color="cyan" depressed @click="runSimulation()">
+          <v-icon>mdi-play</v-icon>
+        </v-btn>
+        <v-btn color="cyan" depressed @click="stopSimulation()">
+          <v-icon>mdi-stop</v-icon>
+        </v-btn>
+        <v-btn color="cyan" depressed @click="init()">
+          <v-icon>mdi-replay</v-icon>
+        </v-btn>
+      </v-btn-toggle>
+    </v-row>
+    <v-row>
+      <Dish v-bind:id="this.id"></Dish>
+    </v-row>
+  </v-col>
 </template>
 
 <script>
@@ -23,27 +39,35 @@ export default {
       type: Number,
       default: 20
     },
-    // numberOfSimulations? or create SimulationGroup component?
+    // numberOfSimulations? or create SimulationGroup component or a simulations store?
     rules: {
-      type: Map,
-      default: {
-        0: [
-          n => (n[1] === 3) ? 1 : 0
-        ],
-        1: [
-          n => (n[1] < 2) ? 0 : 1,
-          n => (n[1] > 3) ? 0 : 1
-        ]
+      type: Object,
+      default: function () {
+        return {
+          0: [
+            n => (n[1] === 3) ? 1 : 0
+          ],
+          1: [
+            n => (n[1] < 2) ? 0 : 1,
+            n => (n[1] > 3) ? 0 : 1
+          ]
+        }
       }
     },
     dishParameters: {
-      type: Map
+      type: Object,
+      default: function () { return this.$store.getters['parameters/parameters'] }
     }
   },
 
   methods: {
     init () {
       this.grid.init(this.dishParameters)
+      this.remainingSteps = this.numberOfSteps
+      this.$store.commit('simulations/setCells', {
+        id: this.id,
+        cells: this.grid.cells
+      })
     },
     performStep () {
       var nextCells = Array(this.grid.width).fill()
@@ -64,7 +88,21 @@ export default {
         }
       }
 
-      return nextCells
+      this.grid.cells = nextCells
+    },
+    runSimulation () {
+      this.state = 'running'
+      // need a worker for the loop.
+      this.performStep()
+      this.$store.commit('simulations/setCells', {
+        id: this.id,
+        cells: this.grid.cells
+      })
+      this.remainingSteps -= 1
+      console.log(this.remainingSteps)
+    },
+    stopSimulation () {
+      this.state = 'stopped'
     }
   },
 
@@ -77,7 +115,7 @@ export default {
   },
 
   mounted () {
-    // this.init()
+    this.init()
   }
 
 }
