@@ -22,7 +22,8 @@
 <script>
 import Dish from '@/components/Dish'
 import { Grid } from '@/model/grid'
-import { rangeArray } from '@/model/utils'
+
+const worker = new Worker('../workers/Simulation.worker.js', { type: 'module' })
 
 export default {
 
@@ -69,37 +70,11 @@ export default {
         cells: this.grid.cells
       })
     },
-    performStep () {
-      var nextCells = Array(this.grid.width).fill()
-        .map(() => Array(this.grid.height).fill()
-          .map(() => Array(this.grid.depth).fill(0)))
-
-      for (var x of rangeArray(0, this.grid.width - 1)) {
-        for (var y of rangeArray(0, this.grid.height - 1)) {
-          for (var z of rangeArray(0, this.grid.depth - 1)) {
-            var cell = this.grid[x][y][z]
-            var neighbors = this.grid.countNeighbors(x, y, z)
-            for (var rule of this.rules[cell]) {
-              var nextCell = rule(neighbors)
-              if (nextCell !== cell) { break }
-            }
-            nextCells[x][y][z] = nextCell
-          }
-        }
-      }
-
-      this.grid.cells = nextCells
-    },
     runSimulation () {
       this.state = 'running'
-      // need a worker for the loop.
-      this.performStep()
-      this.$store.commit('simulations/setCells', {
-        id: this.id,
-        cells: this.grid.cells
-      })
-      this.remainingSteps -= 1
-      console.log(this.remainingSteps)
+      var payload = { cells: this.grid.cells, rules: this.rules }
+      var pStr = JSON.stringify(payload)
+      worker.postMessage(pStr)
     },
     stopSimulation () {
       this.state = 'stopped'
@@ -116,6 +91,19 @@ export default {
 
   mounted () {
     this.init()
+    worker.onmessage = event => {
+      this.$store.commit('simulations/setCells', {
+        id: this.id,
+        cells: event.data
+      })
+      this.grid.cells = event.data
+      this.remainingSteps -= 1
+      if (this.remainingSteps > 0 && this.state === 'running') {
+        var payload = { cells: this.grid.cells, rules: this.rules }
+        var pStr = JSON.stringify(payload)
+        worker.postMessage(pStr)
+      }
+    }
   }
 
 }
