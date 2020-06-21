@@ -1,34 +1,12 @@
 <template>
-  <v-col>
-    <v-row>
-      <v-btn-toggle>
-        <v-btn color="primary" depressed @click="runSimulation()">
-          <v-icon>mdi-play</v-icon>
-        </v-btn>
-        <v-btn color="primary" depressed @click="stopSimulation()">
-          <v-icon>mdi-stop</v-icon>
-        </v-btn>
-        <v-btn color="primary" depressed @click="init()">
-          <v-icon>mdi-replay</v-icon>
-        </v-btn>
-      </v-btn-toggle>
-    </v-row>
-    <v-row>
-      <Dish v-bind:id="this.id"></Dish>
-    </v-row>
-  </v-col>
+  <v-col/>
 </template>
 
 <script>
-import Dish from '@/components/Dish'
 
 const worker = new Worker('../workers/Simulation.worker.js', { type: 'module' })
 
 export default {
-
-  components: {
-    Dish // TODO: keep in SimulationDisplay as DishDisplay to have 1 instance only
-  },
 
   props: {
     id: {
@@ -100,6 +78,30 @@ export default {
         worker.postMessage(pStr)
       }
     }
+    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
+    this.unwatch = this.$store.watch(
+      (state, getters) => {
+        return getters['simulations/state'](this.id)
+      },
+      (newVal, oldVal) => {
+        switch (newVal) {
+          case ('running'):
+            this.isRunning = true
+            this.runSimulation()
+            break
+          case ('init'):
+            this.init()
+            this.isRunning = false
+            break
+          default:
+            this.isRunning = false
+            break
+        }
+      }
+    )
+  },
+  beforeDestroy () {
+    this.unwatch()
   }
 
 }

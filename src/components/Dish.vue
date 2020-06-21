@@ -65,10 +65,12 @@ export default {
       }
     }
   },
-  created () {
+  mounted () {
     // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
     this.unwatch = this.$store.watch(
-      (state, getters) => { return getters['simulations/cells'](this.id) },
+      (state, getters) => {
+        return getters['simulations/cells'](this.id)
+      },
       (newVal, oldVal) => { this.draw(newVal) }
     )
   },
