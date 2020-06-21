@@ -79,7 +79,7 @@ export default {
       }
     }
     // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
-    this.unwatch = this.$store.watch(
+    this.unwatchState = this.$store.watch(
       (state, getters) => {
         return getters['simulations/state'](this.id)
       },
@@ -99,9 +99,21 @@ export default {
         }
       }
     )
+    this.unwatchParameters = this.$store.watch(
+      (state, getters) => {
+        return getters['simulations/parameters'](this.id)
+      },
+      (newVal, oldVal) => {
+        this.dishParameters = newVal
+        worker.postMessage(
+          JSON.stringify({ action: 'init', params: this.dishParameters })
+        )
+      }
+    )
   },
   beforeDestroy () {
-    this.unwatch()
+    this.unwatchState()
+    this.unwatchParameters()
   }
 
 }

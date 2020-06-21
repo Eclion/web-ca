@@ -22,7 +22,7 @@ export default {
   methods: {
     clear () {
       var dishSettings = this.$store.getters['parameters/dish_settings']
-      console.log()
+      // var dishSettings = this.$store.getters['simulations/parameters'](this.id).dish_settings
       var cells = Array(dishSettings.width)
         .fill()
         .map(() => Array(dishSettings.height)

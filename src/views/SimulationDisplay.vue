@@ -64,7 +64,6 @@ export default {
 
   methods: {
     updateState (state) {
-      console.log(this.simulationTab)
       this.$store.commit('simulations/setState', {
         id: this.simulationTab,
         state: state

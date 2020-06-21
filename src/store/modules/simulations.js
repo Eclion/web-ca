@@ -4,7 +4,7 @@ export default {
     simulations: [
       {
         id: 0,
-        // parameters: this.getters['parameters/parameters']
+        parameters: {},
         cells: [],
         state: 'stopped'
       }
@@ -16,6 +16,9 @@ export default {
     },
     setState (state, data) {
       state.simulations[data.id].state = data.state
+    },
+    setParameters (state, data) {
+      state.simulations[data.id].parameters = data.parameters
     }
   },
   getters: {
@@ -27,6 +30,9 @@ export default {
     },
     simulations: (state) => {
       return state.simulations
+    },
+    parameters: (state) => (id) => {
+      return state.simulations[id].parameters
     }
   }
 }
