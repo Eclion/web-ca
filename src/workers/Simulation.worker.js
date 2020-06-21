@@ -36,9 +36,27 @@ const performStep = function (grid, rules) {
   return nextCells
 }
 
+// TODO: refactor here?
+const state = {}
+
 addEventListener('message', event => {
   var payload = JSON.parse(event.data)
-  var newCells = performStep(new Grid(payload.cells), rules)
-  postMessage(newCells)
-  // postMessage(performStep(event.data.grid, event.data.rules))
+
+  switch (payload.action) {
+    case ('init'): {
+      if (state.grid == null) {
+        state.grid = new Grid()
+      }
+      state.grid.init(payload.params)
+      state.params = payload.params
+      postMessage(state.grid.cells)
+      break
+    }
+    case ('run'): {
+      var newCells = performStep(state.grid, rules)
+      state.grid.cells = newCells
+      postMessage(newCells)
+      break
+    }
+  }
 })

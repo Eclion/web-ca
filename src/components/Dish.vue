@@ -68,13 +68,8 @@ export default {
   created () {
     // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
     this.unwatch = this.$store.watch(
-      (state, getters) => {
-        return getters['simulations/cells'](this.id)
-      },
-      (newVal, oldVal) => {
-        console.log('updated')
-        this.draw(newVal)
-      }
+      (state, getters) => { return getters['simulations/cells'](this.id) },
+      (newVal, oldVal) => { this.draw(newVal) }
     )
   },
   beforeDestroy () {

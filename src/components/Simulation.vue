@@ -21,14 +21,13 @@
 
 <script>
 import Dish from '@/components/Dish'
-import { Grid } from '@/model/grid'
 
 const worker = new Worker('../workers/Simulation.worker.js', { type: 'module' })
 
 export default {
 
   components: {
-    Dish // TODO: keep in SimulationDisplay as DishDisplay?
+    Dish // TODO: keep in SimulationDisplay as DishDisplay to have 1 instance only
   },
 
   props: {
@@ -63,28 +62,26 @@ export default {
 
   methods: {
     init () {
-      this.grid.init(this.dishParameters)
+      this.isRunning = false
       this.remainingSteps = this.numberOfSteps
-      this.$store.commit('simulations/setCells', {
-        id: this.id,
-        cells: this.grid.cells
-      })
+      worker.postMessage(
+        JSON.stringify({ action: 'init', params: this.dishParameters })
+      )
     },
     runSimulation () {
-      this.state = 'running'
-      var payload = { cells: this.grid.cells, rules: this.rules }
-      var pStr = JSON.stringify(payload)
-      worker.postMessage(pStr)
+      this.isRunning = true
+      worker.postMessage(
+        JSON.stringify({ action: 'run' })
+      )
     },
     stopSimulation () {
-      this.state = 'stopped'
+      this.isRunning = false
     }
   },
 
   data () {
     return {
-      state: 'created',
-      grid: new Grid(),
+      isRunning: false,
       remainingSteps: 0
     }
   },
@@ -96,10 +93,9 @@ export default {
         id: this.id,
         cells: event.data
       })
-      this.grid.cells = event.data
       this.remainingSteps -= 1
-      if (this.remainingSteps > 0 && this.state === 'running') {
-        var payload = { cells: this.grid.cells, rules: this.rules }
+      if (this.remainingSteps > 0 && this.isRunning) {
+        var payload = { action: 'run', cells: event.data, rules: this.rules }
         var pStr = JSON.stringify(payload)
         worker.postMessage(pStr)
       }
