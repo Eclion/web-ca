@@ -2,13 +2,13 @@
   <v-col>
     <v-row>
       <v-btn-toggle>
-        <v-btn color="cyan" depressed @click="runSimulation()">
+        <v-btn color="primary" depressed @click="runSimulation()">
           <v-icon>mdi-play</v-icon>
         </v-btn>
-        <v-btn color="cyan" depressed @click="stopSimulation()">
+        <v-btn color="primary" depressed @click="stopSimulation()">
           <v-icon>mdi-stop</v-icon>
         </v-btn>
-        <v-btn color="cyan" depressed @click="init()">
+        <v-btn color="primary" depressed @click="init()">
           <v-icon>mdi-replay</v-icon>
         </v-btn>
       </v-btn-toggle>

@@ -6,9 +6,14 @@
         <v-tab>Papers</v-tab>
       </v-tabs>
 
+      <v-switch
+        v-model="$vuetify.theme.dark"
+        hide-details
+        inset
+        label="Dark mode"
+      ></v-switch>
       <v-btn href="https://github.com/Eclion/web-ca/" target="_blank" text>
-        <span class="mr-2">Github repo</span>
-        <v-icon>mdi-open-in-new</v-icon>
+        <v-icon large>mdi-github</v-icon>
       </v-btn>
     </v-app-bar>
     <v-container>

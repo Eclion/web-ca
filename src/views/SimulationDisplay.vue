@@ -1,5 +1,5 @@
 <template>
-  <v-card color="cyan">
+  <v-card color="primary">
     <v-card-text>Simulation display</v-card-text>
     <v-card-text>-tabs</v-card-text>
     <v-card-text>--container</v-card-text>
