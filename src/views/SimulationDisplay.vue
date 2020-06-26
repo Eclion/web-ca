@@ -31,7 +31,7 @@
           v-for="simulation in $store.getters['simulations/simulations']"
           :key="simulation.id"
         >
-          <Simulation v-bind:id="simulation.id"></Simulation>
+          <Simulation v-bind:id="simulation.id" v-bind:numberOfSteps="simulation.numberOfSteps"></Simulation>
         </v-tab-item>
       </v-tabs-items>
     </v-row>

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { rangeArray } from '@/model/utils'
 import { Grid } from '@/model/grid'
 
@@ -49,13 +51,16 @@ addEventListener('message', event => {
       }
       state.grid.init(payload.params)
       state.params = payload.params
-      postMessage(state.grid.cells)
+      postMessage(state.grid.flatten())
       break
     }
     case ('run'): {
+      var startDate = new Date()
       var newCells = performStep(state.grid, rules)
+      var endDate = new Date()
+      // console.log((endDate.getTime() - startDate.getTime())/1000) // baseline: 15 secs
       state.grid.cells = newCells
-      postMessage(newCells)
+      postMessage(state.grid.flatten())
       break
     }
   }

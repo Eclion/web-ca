@@ -116,15 +116,15 @@ export default {
   methods: {
     updateDishSettings () {
       this.$store.commit('parameters/setDishSettings', {
-        width: this.dishWidth,
-        height: this.dishHeight,
-        depth: this.dishDepth
+        width: parseInt(this.dishWidth),
+        height: parseInt(this.dishHeight),
+        depth: parseInt(this.dishDepth)
       })
     },
     updateSimulationParameters () {
       this.$store.commit('parameters/setSimulationParameters', {
         number_of_simulations: 1,
-        number_of_steps: this.numberOfSteps
+        number_of_steps: parseInt(this.numberOfSteps)
       })
     },
     updateCellTypes () {
@@ -133,7 +133,7 @@ export default {
     },
     apply () {
       this.$store.commit('simulations/setParameters', {
-        id: 0, // this.simulationTab,
+        id: 0, // TODO: this.simulationTab,
         parameters: this.$store.getters['parameters/parameters']
       })
     }

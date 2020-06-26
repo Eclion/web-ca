@@ -20,22 +20,11 @@ export default {
   },
 
   methods: {
-    clear () {
-      var dishSettings = this.$store.getters['parameters/dish_settings']
-      // var dishSettings = this.$store.getters['simulations/parameters'](this.id).dish_settings
-      var cells = Array(dishSettings.width)
-        .fill()
-        .map(() => Array(dishSettings.height)
-          .fill()
-          .map(() => Array(dishSettings.depth).fill(0)))
-      this.draw(cells)
-    },
-
     // use vuex instead of argument for cells & colorMap
-    draw (cells) {
-      var absciss = cells.length
+    draw (displayedCells) {
+      var absciss = displayedCells.length
       if (absciss <= 0) return
-      var ordinate = cells[0].length
+      var ordinate = displayedCells[0].length
 
       var dish = this.$refs.dish
       var context = dish.getContext('2d')
@@ -47,17 +36,10 @@ export default {
       dish.width = absciss * cellZoom
       dish.height = ordinate * cellZoom
 
+      // TODO: move Z axis to grid.js
       for (var i = 0; i < absciss; i++) {
         for (var j = 0; j < ordinate; j++) {
-          var displayedCell = 0
-          for (var k = 0; k < cells[i][j].length; k++) {
-            var cell = cells[i][j][k]
-            if (cell !== 0) {
-              displayedCell = cell
-              break
-            }
-          }
-          context.fillStyle = this.colorMap[displayedCell]
+          context.fillStyle = this.colorMap[displayedCells[i][j]]
           var x = i * cellZoom
           var y = j * cellZoom
           context.fillRect(x, y, cellZoom, cellZoom)
@@ -69,7 +51,7 @@ export default {
     // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
     this.unwatch = this.$store.watch(
       (state, getters) => {
-        return getters['simulations/cells'](this.id)
+        return getters['simulations/displayedCells'](this.id)
       },
       (newVal, oldVal) => { this.draw(newVal) }
     )
