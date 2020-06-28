@@ -21,9 +21,9 @@ export default {
           'if live neighbors less than 3, becomes empty, else live',
           'if neighbors more than 3, then empty, else live'
         ],
+        initialCount: 500,
         distribution: {
-          type: 'random',
-          count: 500
+          type: 'random'
         }
       }
     ],
@@ -45,8 +45,11 @@ export default {
       }
       return colorMap
     },
-    cell_types: (state) => {
+    cellConfigurations: (state) => {
       return state.cell_types
+    },
+    cellConfiguration: (state) => (name) => {
+      return state.cell_types.filter(cellDefinition => cellDefinition.name === name)[0]
     },
     dish_settings: (state) => {
       return state.dish_settings

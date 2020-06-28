@@ -55,15 +55,15 @@ export class Grid {
       if (!('distribution' in cellType)) { continue }
       var distribution = cellType.distribution
       switch (distribution.type) {
-        case ('random'): this.randomDistribution(index, distribution); break
+        case ('random'): this.randomDistribution(index, cellType.initialCount); break
       }
     }
     // TODO: review performances between current implementation and
     //   Array(dimensions["height"] * dimensions["width"] * dimensions['depth'])
   }
 
-  randomDistribution (cellId, distribution) {
-    var ratio = distribution.count / (this.width * this.height)
+  randomDistribution (cellId, cellCount) {
+    var ratio = cellCount / (this.width * this.height)
     for (var i = 0; i < this.width; i++) {
       for (var j = 0; j < this.height; j++) {
         this.cells[i][j][0] = Math.random() <= ratio ? 1 : 0

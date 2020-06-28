@@ -27,13 +27,13 @@
               <v-card-text>Dish:</v-card-text>
             </v-col>
             <v-col cols="2">
-              <v-text-field type="number" label="Height" v-model="dishHeight"></v-text-field>
+              <v-text-field type="number" label="Height" v-model="dishHeight" />
             </v-col>
             <v-col cols="2">
-              <v-text-field type="number" label="Width" v-model="dishWidth"></v-text-field>
+              <v-text-field type="number" label="Width" v-model="dishWidth" />
             </v-col>
             <v-col cols="2">
-              <v-text-field type="number" label="Depth" v-model="dishDepth"></v-text-field>
+              <v-text-field type="number" label="Depth" v-model="dishDepth" />
             </v-col>
             <v-spacer/>
           </v-row>
@@ -44,22 +44,24 @@
       <v-expansion-panel>
         <v-expansion-panel-header color="primary">Cells & rules</v-expansion-panel-header>
         <v-expansion-panel-content color="primary">
-          <!-- <v-row>
-            <v-col cols="2">
-              <v-card-text>Initial number of cells:</v-card-text>
-            </v-col>
-            <v-col cols="2">
-              <v-text-field type="number" v-model=""></v-text-field>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="2">
-              <v-card-text>Initial cell distribution:</v-card-text>
-            </v-col>
-            <v-col cols="2">
-              <v-text-field type="number" v-model="initialCellDistribution"></v-text-field>
-            </v-col>
-          </v-row> -->
+          <!--
+            add/remove buttons
+          -->
+          <v-expansion-panels multiple>
+          <!-- <v-expansion-panel
+            v-for="cellConfiguration in $store.getters['parameters/cellConfigurations']"
+            v-bind:key=cellConfiguration.name
+          >
+          <CellConfiguration :initialName='cellConfiguration.name'/>
+          </v-expansion-panel> -->
+          <v-expansion-panel>
+          </v-expansion-panel>
+          <v-expansion-panel-header color="primary">test</v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <v-card-text>hello</v-card-text>
+          </v-expansion-panel-content>
+          </v-expansion-panels>
+          <CellConfiguration initialName='empty'/>
         </v-expansion-panel-content>
       </v-expansion-panel>
 
@@ -96,10 +98,12 @@
 </template>
 
 <script>
+import CellConfiguration from '@/components/CellConfiguration'
 
 export default {
 
   components: {
+    CellConfiguration
   },
 
   data () {

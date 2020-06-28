@@ -54,7 +54,7 @@ export default {
 
   components: {
     Simulation,
-    Dish // TODO: keep in SimulationDisplay as DishDisplay to have 1 instance only
+    Dish
   },
 
   data () {
