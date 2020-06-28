@@ -28,7 +28,8 @@ export default {
       }
     ],
     number_of_simulations: 1,
-    number_of_steps: 20
+    number_of_steps: 20,
+    version: 0
   },
   getters: {
     parameters: (state) => {

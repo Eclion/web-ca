@@ -4,8 +4,6 @@
 
 <script>
 
-const worker = new Worker('../workers/Simulation.worker.js', { type: 'module' })
-
 export default {
 
   props: {
@@ -34,13 +32,13 @@ export default {
     init () {
       this.isRunning = false
       this.remainingSteps = this.parameters.number_of_steps
-      worker.postMessage(
+      this.worker.postMessage(
         JSON.stringify({ action: 'init', params: this.parameters })
       )
     },
     runSimulation () {
       this.isRunning = true
-      worker.postMessage(
+      this.worker.postMessage(
         JSON.stringify({ action: 'run' })
       )
     },
@@ -53,14 +51,15 @@ export default {
     return {
       isRunning: false,
       remainingSteps: 0,
-      parameters: {}
+      parameters: {},
+      worker: new Worker('../workers/Simulation.worker.js', { type: 'module' })
     }
   },
 
   mounted () {
     this.parameters = this.$store.getters['simulations/parameters'](this.id)
     this.init()
-    worker.onmessage = event => {
+    this.worker.onmessage = event => {
       if (event.data === undefined) {
         return
       }
@@ -72,10 +71,9 @@ export default {
       if (this.remainingSteps > 0 && this.isRunning) {
         var payload = { action: 'run' }
         var pStr = JSON.stringify(payload)
-        worker.postMessage(pStr)
+        this.worker.postMessage(pStr)
       }
     }
-    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
     this.unwatchState = this.$store.watch(
       (state, getters) => {
         return getters['simulations/state'](this.id)
@@ -109,6 +107,7 @@ export default {
   beforeDestroy () {
     this.unwatchState()
     this.unwatchParameters()
+    this.worker.terminate()
   }
 
 }

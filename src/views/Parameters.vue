@@ -1,10 +1,10 @@
 <template>
   <v-card color="primary">
-    <v-toolbar  color="primary" dense>
+    <v-toolbar color="primary" dense>
       <v-toolbar-title>Parameters</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn>
-        <v-card-text>New</v-card-text>
+        <v-card-text @click="newSimulation()">New</v-card-text>
       </v-btn>
 
       <v-btn>
@@ -23,7 +23,7 @@
         <v-expansion-panel-header color="primary">Dish configuration</v-expansion-panel-header>
         <v-expansion-panel-content color="primary">
           <v-row>
-            <v-col cols="2">
+            <v-col cols="3">
               <v-card-text>Dish:</v-card-text>
             </v-col>
             <v-col cols="2">
@@ -68,7 +68,7 @@
         <v-expansion-panel-header color="primary">Simulation configuration</v-expansion-panel-header>
         <v-expansion-panel-content color="primary">
           <v-row>
-            <v-col cols="2">
+            <v-col cols="6">
               <v-card-text>Number of steps:</v-card-text>
             </v-col>
             <v-col cols="2">
@@ -136,6 +136,17 @@ export default {
         id: 0, // TODO: this.simulationTab,
         parameters: this.$store.getters['parameters/parameters']
       })
+    },
+    newSimulation () {
+      this.$store.commit('simulations/new', {
+        parameters: this.$store.getters['parameters/parameters']
+      })
+    }
+  },
+
+  mounted () {
+    if (this.$store.getters['simulations/simulations'].length === 0) {
+      this.newSimulation()
     }
   },
 

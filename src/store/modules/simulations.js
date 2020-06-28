@@ -1,17 +1,7 @@
 export default {
   namespaced: true,
   state: {
-    simulations: [ // TODO: POJO for parameters ?
-      {
-        id: 0,
-        parameters: {
-          version: 0,
-          numberOfSteps: 20
-        },
-        displayedCells: [],
-        state: 'stopped'
-      }
-    ]
+    simulations: [] // TODO: POJO for parameters ?
   },
   mutations: {
     setCells (state, data) {
@@ -27,6 +17,15 @@ export default {
       state.simulations[data.id].parameters.number_of_simulations = data.parameters.number_of_simulations
       state.simulations[data.id].parameters.number_of_steps = data.parameters.number_of_steps
       state.simulations[data.id].parameters.version = version + 1
+    },
+    new (state, data) {
+      state.simulations.push({
+        id: state.simulations.length,
+        parameters: data.parameters,
+        displayedCells: [],
+        state: 'stopped'
+      })
+      // state.count = state.count + 1
     }
   },
   getters: {
@@ -38,6 +37,9 @@ export default {
     },
     simulations: (state) => {
       return state.simulations
+    },
+    simulationCount: (state) => {
+      return state.count
     },
     parameters: (state) => (id) => {
       return state.simulations[id].parameters

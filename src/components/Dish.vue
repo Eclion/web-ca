@@ -48,7 +48,6 @@ export default {
     }
   },
   mounted () {
-    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
     this.unwatch = this.$store.watch(
       (state, getters) => {
         return getters['simulations/displayedCells'](this.id)

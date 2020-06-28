@@ -7,6 +7,7 @@
           <v-tab
             v-for="simulation in $store.getters['simulations/simulations']"
             v-bind:key="simulation.id"
+            style="min-width:20px"
           >{{ simulation.id }}</v-tab>
         </v-tabs>
       </v-col>
@@ -58,7 +59,7 @@ export default {
 
   data () {
     return {
-      simulationTab: 0 // TODO: check behavoir once simulations are dynamically created
+      simulationTab: null
     }
   },
 
