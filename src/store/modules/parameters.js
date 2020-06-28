@@ -28,7 +28,8 @@ export default {
       }
     ],
     number_of_simulations: 1,
-    number_of_steps: 20
+    number_of_steps: 20,
+    version: 0
   },
   getters: {
     parameters: (state) => {
@@ -58,12 +59,16 @@ export default {
       }
       this.set(state, jsonContent)
     },
-    set (state, parameters) {
-      // TODO: throw exception if missing param or ignore?
-      state.cell_types = parameters.cell_types
-      state.dish_settings = parameters.dish_settings
+    // TODO: throw exception if missing param or ignore?
+    setSimulationParameters (state, parameters) {
       state.number_of_simulations = parameters.number_of_simulations
       state.number_of_steps = parameters.number_of_steps
+    },
+    setDishSettings (state, dishSettings) {
+      state.dish_settings = dishSettings
+    },
+    setCellParameters (state, cellTypes) {
+      state.cell_types = cellTypes
     }
   }
 

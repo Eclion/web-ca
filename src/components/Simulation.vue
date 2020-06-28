@@ -4,18 +4,12 @@
 
 <script>
 
-const worker = new Worker('../workers/Simulation.worker.js', { type: 'module' })
-
 export default {
 
   props: {
     id: {
       type: Number,
       default: 0
-    },
-    numberOfSteps: {
-      type: Number,
-      default: 20
     },
     // numberOfSimulations? or create SimulationGroup component or a simulations store?
     rules: {
@@ -31,24 +25,20 @@ export default {
           ]
         }
       }
-    },
-    dishParameters: {
-      type: Object,
-      default: function () { return this.$store.getters['parameters/parameters'] }
     }
   },
 
   methods: {
     init () {
       this.isRunning = false
-      this.remainingSteps = this.numberOfSteps
-      worker.postMessage(
-        JSON.stringify({ action: 'init', params: this.dishParameters })
+      this.remainingSteps = this.parameters.number_of_steps
+      this.worker.postMessage(
+        JSON.stringify({ action: 'init', params: this.parameters })
       )
     },
     runSimulation () {
       this.isRunning = true
-      worker.postMessage(
+      this.worker.postMessage(
         JSON.stringify({ action: 'run' })
       )
     },
@@ -60,26 +50,31 @@ export default {
   data () {
     return {
       isRunning: false,
-      remainingSteps: 0
+      remainingSteps: 0,
+      parameters: {},
+      worker: new Worker('../workers/Simulation.worker.js', { type: 'module' })
     }
   },
 
   mounted () {
+    this.parameters = this.$store.getters['simulations/parameters'](this.id)
     this.init()
-    worker.onmessage = event => {
+    this.worker.onmessage = event => {
+      if (event.data === undefined) {
+        return
+      }
       this.$store.commit('simulations/setCells', {
         id: this.id,
-        cells: event.data
+        displayedCells: event.data
       })
       this.remainingSteps -= 1
       if (this.remainingSteps > 0 && this.isRunning) {
-        var payload = { action: 'run', cells: event.data, rules: this.rules }
+        var payload = { action: 'run' }
         var pStr = JSON.stringify(payload)
-        worker.postMessage(pStr)
+        this.worker.postMessage(pStr)
       }
     }
-    // this.unwatch = this.$store.watch((state) => state.simulation.grid, (val) => { console.log(val) })
-    this.unwatch = this.$store.watch(
+    this.unwatchState = this.$store.watch(
       (state, getters) => {
         return getters['simulations/state'](this.id)
       },
@@ -99,9 +94,20 @@ export default {
         }
       }
     )
+    this.unwatchParameters = this.$store.watch(
+      (state, getters) => {
+        return getters['simulations/parameters'](this.id).version
+      },
+      (newVal, oldVal) => {
+        this.parameters = this.$store.getters['simulations/parameters'](this.id)
+        this.init()
+      }
+    )
   },
   beforeDestroy () {
-    this.unwatch()
+    this.unwatchState()
+    this.unwatchParameters()
+    this.worker.terminate()
   }
 
 }

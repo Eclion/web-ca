@@ -7,6 +7,7 @@
           <v-tab
             v-for="simulation in $store.getters['simulations/simulations']"
             v-bind:key="simulation.id"
+            style="min-width:20px"
           >{{ simulation.id }}</v-tab>
         </v-tabs>
       </v-col>
@@ -31,7 +32,7 @@
           v-for="simulation in $store.getters['simulations/simulations']"
           :key="simulation.id"
         >
-          <Simulation v-bind:id="simulation.id"></Simulation>
+          <Simulation v-bind:id="simulation.id" v-bind:numberOfSteps="simulation.numberOfSteps"></Simulation>
         </v-tab-item>
       </v-tabs-items>
     </v-row>
@@ -58,13 +59,12 @@ export default {
 
   data () {
     return {
-      simulationTab: 0 // TODO: check behavoir once simulations are dynamically created
+      simulationTab: null
     }
   },
 
   methods: {
     updateState (state) {
-      console.log(this.simulationTab)
       this.$store.commit('simulations/setState', {
         id: this.simulationTab,
         state: state

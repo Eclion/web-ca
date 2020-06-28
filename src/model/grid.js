@@ -38,6 +38,9 @@ export class Grid {
 
   init (params) {
     var dimensions = params.dish_settings
+    if (dimensions === undefined) {
+      return
+    }
     this.cells = Array(dimensions.width).fill()
       .map(() => Array(dimensions.height).fill()
         .map(() => Array(dimensions.depth).fill(0))
@@ -106,5 +109,24 @@ export class Grid {
     }
 
     return count
+  }
+
+  flatten () {
+    var flattenedCells = Array(this.width).fill()
+      .map(() => Array(this.height).fill(0))
+
+    for (var i = 0; i < this.width; i++) {
+      for (var j = 0; j < this.height; j++) {
+        for (var k = 0; k < this.cells[i][j].length; k++) {
+          var cell = this.cells[i][j][k]
+          if (cell !== 0) {
+            flattenedCells[i][j] = cell
+            break
+          }
+        }
+      }
+    }
+
+    return flattenedCells
   }
 }
