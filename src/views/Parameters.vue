@@ -48,20 +48,12 @@
             add/remove buttons
           -->
           <v-expansion-panels multiple>
-          <!-- <v-expansion-panel
+          <CellConfiguration
             v-for="cellConfiguration in $store.getters['parameters/cellConfigurations']"
             v-bind:key=cellConfiguration.name
-          >
-          <CellConfiguration :initialName='cellConfiguration.name'/>
-          </v-expansion-panel> -->
-          <v-expansion-panel>
-          </v-expansion-panel>
-          <v-expansion-panel-header color="primary">test</v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-card-text>hello</v-card-text>
-          </v-expansion-panel-content>
+            :initialName=cellConfiguration.name
+          />
           </v-expansion-panels>
-          <CellConfiguration initialName='empty'/>
         </v-expansion-panel-content>
       </v-expansion-panel>
 

@@ -5,14 +5,17 @@
 
     validation icon ?
   -->
-  <v-card color="primary">
-    <v-col>
-  <v-row>
-    <!--
-      color picker: https://codepen.io/JamieCurnow/pen/KKPjraK?editors=1010
-    -->
-    <v-text-field v-model="name" hide-details solo background-color="primary" flat>
-      <template v-slot:append>
+  <v-expansion-panel color="primary">
+    <v-expansion-panel-header color="primary">
+      <v-col cols=2 style="padding:0">
+      <v-text-field v-model="name" hide-details solo background-color="primary" flat :disabled="this.name === 'empty'" @click.stop></v-text-field>
+      </v-col>
+      <v-spacer/>
+      <v-col cols=1 style="padding:0">
+
+        <!--
+          color picker: https://codepen.io/JamieCurnow/pen/KKPjraK?editors=1010
+        -->
         <v-menu v-model="menu" top nudge-bottom="105" nudge-left="16" :close-on-content-click="false">
           <template v-slot:activator="{ on }">
             <div :style="swatchStyle" v-on="on" />
@@ -23,8 +26,11 @@
             </v-card-text>
           </v-card>
         </v-menu>
-      </template>
-    </v-text-field>
+      </v-col>
+      </v-expansion-panel-header>
+    <v-expansion-panel-content color="primary">
+  <v-row>
+
   </v-row>
   <v-row>
     <Rule
@@ -52,8 +58,8 @@
         -->
     </v-col>
   </v-row>
-    </v-col>
-</v-card>
+    </v-expansion-panel-content>
+</v-expansion-panel>
 </template>
 
 <script>
@@ -100,8 +106,7 @@ export default {
         cursor: 'pointer',
         height: '30px',
         width: '30px',
-        borderRadius: this.menu ? '50%' : '4px',
-        transition: 'border-radius 200ms ease-in-out'
+        borderRadius: '4px'
       }
     }
   },
