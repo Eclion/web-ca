@@ -63,9 +63,10 @@ export default {
       if (event.data === undefined) {
         return
       }
+      this.$log.debug(event.data)
       this.$store.commit('simulations/setCells', {
         id: this.id,
-        displayedCells: event.data
+        displayedCells: event.data.cells
       })
       this.remainingSteps -= 1
       if (this.remainingSteps > 0 && this.isRunning) {
