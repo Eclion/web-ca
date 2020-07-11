@@ -111,7 +111,7 @@ export default {
     }
   },
   mounted () {
-    var cellConfiguration = this.$store.getters['parameters/cellConfiguration'](this.initialName)
+    var cellConfiguration = this.$store.getters['form/cellConfiguration'](this.initialName)
     this.color = cellConfiguration.color
     this.rules = cellConfiguration.rules
     this.initialCount = cellConfiguration.initialCount

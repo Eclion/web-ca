@@ -49,7 +49,7 @@
           -->
           <v-expansion-panels multiple>
           <CellConfiguration
-            v-for="cellConfiguration in $store.getters['parameters/cellConfigurations']"
+            v-for="cellConfiguration in $store.getters['form/cellConfigurations']"
             v-bind:key=cellConfiguration.name
             :initialName=cellConfiguration.name
           />
@@ -111,31 +111,31 @@ export default {
 
   methods: {
     updateDishSettings () {
-      this.$store.commit('parameters/setDishSettings', {
+      this.$store.commit('form/setDishSettings', {
         width: parseInt(this.dishWidth),
         height: parseInt(this.dishHeight),
         depth: parseInt(this.dishDepth)
       })
     },
     updateSimulationParameters () {
-      this.$store.commit('parameters/setSimulationParameters', {
+      this.$store.commit('form/setSimulationParameters', {
         number_of_simulations: 1,
         number_of_steps: parseInt(this.numberOfSteps)
       })
     },
     updateCellTypes () {
-      /* this.$store.commit('parameters/setCellParameters', {
+      /* this.$store.commit('form/setCellParameters', {
       }) */
     },
     apply () {
       this.$store.commit('simulations/setParameters', {
         id: 0, // TODO: this.simulationTab,
-        parameters: this.$store.getters['parameters/parameters']
+        parameters: this.$store.getters['form/parameters']
       })
     },
     newSimulation () {
       this.$store.commit('simulations/new', {
-        parameters: this.$store.getters['parameters/parameters']
+        parameters: this.$store.getters['form/parameters']
       })
     }
   },

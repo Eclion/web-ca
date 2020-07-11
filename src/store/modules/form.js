@@ -8,6 +8,7 @@ export default {
     },
     cell_types: [
       {
+        id: 0,
         name: 'empty',
         color: '#000000',
         rules: [
@@ -15,6 +16,7 @@ export default {
         ]
       },
       {
+        id: 1,
         name: 'live',
         color: '#FFFFFF',
         rules: [
