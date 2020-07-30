@@ -72,29 +72,19 @@ export default {
   },
 
   props: {
-    id: {
-      type: Number,
-      default: 0
-    },
-    initialName: {
-      type: String,
-      default: ''
-    },
-    initialColor: {
-      type: String,
-      default: '#FFFFFF'
+    initialConfig: {
+      type: Object
     }
   },
 
   data () {
     return {
-      name: this.initialName,
-      color: this.initialColor,
-      rules: [],
-      initialCount: 0,
-      distribution: {
-        type: 'random'
-      },
+      id: this.initialConfig.id,
+      name: this.initialConfig.name,
+      color: this.initialConfig.color,
+      rules: this.initialConfig.rules,
+      initialCount: this.initialConfig.initialCount,
+      distribution: this.initialConfig.distribution,
       menu: false
     }
   },
@@ -110,12 +100,26 @@ export default {
       }
     }
   },
-  mounted () {
-    var cellConfiguration = this.$store.getters['form/cellConfiguration'](this.initialName)
-    this.color = cellConfiguration.color
-    this.rules = cellConfiguration.rules
-    this.initialCount = cellConfiguration.initialCount
-    this.distribution = cellConfiguration.distribution
+
+  methods: {
+    notifyUpdate () {
+      this.$emit('updateCellType', {
+        id: this.id,
+        name: this.name,
+        color: this.color,
+        rules: this.rules,
+        initialCount: parseInt(this.initialCount),
+        distribution: this.distribution
+      })
+    }
+  },
+
+  watch: {
+    name: 'notifyUpdate',
+    color: 'notifyUpdate',
+    rules: 'notifyUpdate',
+    initialCount: 'notifyUpdate',
+    distribution: 'notifyUpdate'
   }
 }
 </script>

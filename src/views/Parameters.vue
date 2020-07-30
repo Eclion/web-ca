@@ -49,9 +49,10 @@
           -->
           <v-expansion-panels multiple>
           <CellConfiguration
-            v-for="cellConfiguration in $store.getters['form/cellConfigurations']"
-            v-bind:key=cellConfiguration.name
-            :initialName=cellConfiguration.name
+            v-for="cellType in this.cellTypes"
+            v-bind:key=cellType.name
+            :initialConfig=cellType
+            v-on:updateCellType="updateCellType"
           />
           </v-expansion-panels>
         </v-expansion-panel-content>
@@ -105,38 +106,69 @@ export default {
       dishDepth: 1,
       // numberOfSimulations: 1,
       numberOfSteps: 20,
-      initialCellDistribution: 'Normal Random'
+      initialCellDistribution: 'Normal Random',
+      cellTypes: [
+        {
+          id: 0,
+          name: 'empty',
+          color: '#000000',
+          rules: [
+            'if live neighbors between 2 to 3, becomes live'
+          ]
+        },
+        {
+          id: 1,
+          name: 'live',
+          color: '#FFFFFF',
+          rules: [
+            'if live neighbors less than 3, becomes empty, else live',
+            'if neighbors more than 3, then empty, else live'
+          ],
+          initialCount: 500,
+          distribution: {
+            type: 'random'
+          }
+        }
+      ],
+      rules: []
     }
   },
 
   methods: {
-    updateDishSettings () {
-      this.$store.commit('form/setDishSettings', {
-        width: parseInt(this.dishWidth),
-        height: parseInt(this.dishHeight),
-        depth: parseInt(this.dishDepth)
-      })
-    },
-    updateSimulationParameters () {
-      this.$store.commit('form/setSimulationParameters', {
-        number_of_simulations: 1,
-        number_of_steps: parseInt(this.numberOfSteps)
-      })
-    },
-    updateCellTypes () {
-      /* this.$store.commit('form/setCellParameters', {
-      }) */
-    },
     apply () {
-      this.$store.commit('simulations/setParameters', {
+      var parameters = {
         id: 0, // TODO: this.simulationTab,
-        parameters: this.$store.getters['form/parameters']
-      })
+        parameters: {
+          dish_settings: {
+            width: this.dishWidth,
+            height: this.dishHeight,
+            depth: this.dishDepth
+          },
+          cell_types: this.cellTypes,
+          number_of_simulations: 1,
+          number_of_steps: this.numberOfSteps,
+          version: 0
+        }
+      }
+      this.$store.commit('simulations/setParameters', parameters)
     },
     newSimulation () {
       this.$store.commit('simulations/new', {
-        parameters: this.$store.getters['form/parameters']
+        parameters: {
+          dish_settings: {
+            width: parseInt(this.dishWidth),
+            height: parseInt(this.dishHeight),
+            depth: parseInt(this.dishDepth)
+          },
+          cell_types: this.cellTypes,
+          number_of_simulations: 1,
+          number_of_steps: parseInt(this.numberOfSteps),
+          version: 0 // TODO: remove
+        }
       })
+    },
+    updateCellType (cellType) {
+      this.cellTypes[cellType.id] = cellType
     }
   },
 
@@ -144,13 +176,6 @@ export default {
     if (this.$store.getters['simulations/simulations'].length === 0) {
       this.newSimulation()
     }
-  },
-
-  watch: {
-    dishWidth: 'updateDishSettings',
-    dishHeight: 'updateDishSettings',
-    dishDepth: 'updateDishSettings',
-    numberOfSteps: 'updateSimulationParameters'
   }
 }
 </script>
