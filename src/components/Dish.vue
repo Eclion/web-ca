@@ -50,7 +50,7 @@ export default {
   mounted () {
     this.unwatch = this.$store.watch(
       (state, getters) => {
-        return getters['simulations/displayedCells'](this.id)
+        return getters['displayedCells/get'](this.id)
       },
       (newVal, oldVal) => { this.draw(newVal) }
     )

@@ -4,9 +4,6 @@ export default {
     simulations: [] // TODO: POJO for parameters ?
   },
   mutations: {
-    setCells (state, data) {
-      state.simulations[data.id].displayedCells = data.displayedCells
-    },
     setState (state, data) {
       state.simulations[data.id].state = data.state
     },
@@ -22,16 +19,12 @@ export default {
       state.simulations.push({
         id: state.simulations.length,
         parameters: data.parameters,
-        displayedCells: [],
         state: 'stopped'
       })
       // state.count = state.count + 1
     }
   },
   getters: {
-    displayedCells: (state) => (id) => {
-      return state.simulations[id].displayedCells
-    },
     state: (state) => (id) => {
       return state.simulations[id].state
     },

@@ -64,9 +64,9 @@ export default {
         return
       }
       this.$log.debug(event.data)
-      this.$store.commit('simulations/setCells', {
+      this.$store.commit('displayedCells/set', {
         id: this.id,
-        displayedCells: event.data.cells
+        cells: event.data.cells
       })
       this.remainingSteps -= 1
       if (this.remainingSteps > 0 && this.isRunning) {
