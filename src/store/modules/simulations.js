@@ -9,8 +9,6 @@ export default {
     },
     setParameters (state, data) {
       var version = state.simulations[data.id].parameters.version
-      state.simulations[data.id].parameters.dish_settings = data.parameters.dish_settings
-      state.simulations[data.id].parameters.cell_types = data.parameters.cell_types
       state.simulations[data.id].parameters.number_of_simulations = data.parameters.number_of_simulations
       state.simulations[data.id].parameters.number_of_steps = data.parameters.number_of_steps
       state.simulations[data.id].parameters.version = version + 1

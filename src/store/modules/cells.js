@@ -5,15 +5,19 @@ export default {
   },
   mutations: {
     set (state, data) {
-      state.displayedCells[data.id].cells = data.cells
+      if (state.displayedCells[data.simulationId] === undefined) {
+        state.displayedCells.push({ cells: data.cells })
+      } else {
+        state.displayedCells[data.simulationId].cells = data.cells
+      }
     }
   },
   getters: {
-    get: (state) => (id) => {
-      if (state.displayedCells[id] === undefined) {
+    get: (state) => (simulationId) => {
+      if (state.displayedCells[simulationId] === undefined) {
         state.displayedCells.push({ cells: [] })
       }
-      return state.displayedCells[id].cells
+      return state.displayedCells[simulationId].cells
     }
   }
 }

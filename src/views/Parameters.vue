@@ -130,37 +130,46 @@ export default {
           }
         }
       ],
-      rules: []
+      rules: [],
+      simulationId: 0
     }
   },
 
   methods: {
     apply () {
       var parameters = {
-        id: 0, // TODO: this.simulationTab,
+        id: this.simulationId, // TODO: this.simulationTab,
         parameters: {
-          dish_settings: {
-            width: this.dishWidth,
-            height: this.dishHeight,
-            depth: this.dishDepth
-          },
-          cell_types: this.cellTypes,
           number_of_simulations: 1,
           number_of_steps: this.numberOfSteps,
           version: 0
         }
       }
+      this.$store.commit('dimensions/set', {
+        simulationId: this.simulationId,
+        width: this.dishWidth,
+        height: this.dishHeight,
+        depth: this.dishDepth
+      })
+      this.$store.commit('cellTypes/set', {
+        simulationId: this.simulationId,
+        cellTypes: this.cellTypes
+      })
       this.$store.commit('simulations/setParameters', parameters)
     },
     newSimulation () {
+      this.$store.commit('cellTypes/set', {
+        simulationId: this.simulationId,
+        cellTypes: this.cellTypes
+      })
+      this.$store.commit('dimensions/set', {
+        simulationId: this.simulationId,
+        width: this.dishWidth,
+        height: this.dishHeight,
+        depth: this.dishDepth
+      })
       this.$store.commit('simulations/new', {
         parameters: {
-          dish_settings: {
-            width: parseInt(this.dishWidth),
-            height: parseInt(this.dishHeight),
-            depth: parseInt(this.dishDepth)
-          },
-          cell_types: this.cellTypes,
           number_of_simulations: 1,
           number_of_steps: parseInt(this.numberOfSteps),
           version: 0 // TODO: remove

@@ -37,7 +37,7 @@ export class Grid {
   }
 
   init (params) {
-    var dimensions = params.dish_settings
+    var dimensions = params.dishSettings
     if (dimensions === undefined) {
       return
     }
@@ -45,10 +45,10 @@ export class Grid {
       .map(() => Array(dimensions.height).fill()
         .map(() => Array(dimensions.depth).fill(0))
       )
-    if (!('cell_types' in params)) {
+    if (!('cellTypes' in params)) {
       return
     }
-    var cellTypes = params.cell_types
+    var cellTypes = params.cellTypes
     for (var index in cellTypes) {
       var cellType = cellTypes[index]
       if (cellType.name === 'empty') { continue }

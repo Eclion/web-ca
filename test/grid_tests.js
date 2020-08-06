@@ -7,7 +7,7 @@ module('Grid tests', () => {
     var width = 25
     var depth = 3
     var params = {
-      dish_settings: {
+      dishSettings: {
         height: height,
         width: width,
         depth: depth
@@ -45,8 +45,8 @@ module('Grid tests', () => {
   test('1 type with random distribution', assert => {
     var grid = new Grid()
     grid.init({
-      dish_settings: gridTestDishSettings,
-      cell_types: gridTestCellTypes
+      dishSettings: gridTestDishSettings,
+      cellTypes: gridTestCellTypes
     })
 
     var count = grid.cells.flat().flat().filter(x => x === 1).length
@@ -69,7 +69,7 @@ module('Neighbor', () => {
   test('Neighbor count with 1 cell type', assert => {
     var grid = new Grid()
     var dishSettings = { height: 3, width: 3, depth: 3 }
-    grid.init({ dish_settings: dishSettings })
+    grid.init({ dishSettings: dishSettings })
     grid[1][1][1] = 1
     assert.equal(grid.count_neighbors(1, 1, 0).total, 1, 'First count at (1, 1, 0)')
     assert.equal(grid.count_neighbors(1, 1, 1).total, 0, 'First count at (1, 1, 1)')

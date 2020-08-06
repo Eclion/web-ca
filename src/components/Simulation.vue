@@ -30,6 +30,11 @@ export default {
 
   methods: {
     init () {
+      var cellTypes = this.$store.getters['cellTypes/get'](this.id)
+      var dishSettings = this.$store.getters['dimensions/get'](this.id)
+      this.parameters = this.$store.getters['simulations/parameters'](this.id)
+      this.parameters.cellTypes = cellTypes
+      this.parameters.dishSettings = dishSettings
       this.isRunning = false
       this.remainingSteps = this.parameters.number_of_steps
       this.worker.postMessage(
@@ -57,7 +62,6 @@ export default {
   },
 
   mounted () {
-    this.parameters = this.$store.getters['simulations/parameters'](this.id)
     this.init()
     this.worker.onmessage = event => {
       if (event.data === undefined) {
@@ -65,7 +69,7 @@ export default {
       }
       this.$log.debug(event.data)
       this.$store.commit('displayedCells/set', {
-        id: this.id,
+        simulationId: this.id,
         cells: event.data.cells
       })
       this.remainingSteps -= 1
@@ -100,7 +104,6 @@ export default {
         return getters['simulations/parameters'](this.id).version
       },
       (newVal, oldVal) => {
-        this.parameters = this.$store.getters['simulations/parameters'](this.id)
         this.init()
       }
     )

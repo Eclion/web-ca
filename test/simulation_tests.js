@@ -13,7 +13,7 @@ module('Game of Life', () => {
   test('lone cell dies', assert => {
     const grid = new Grid()
     grid.init({
-      dish_settings: dish2DSettings
+      dishSettings: dish2DSettings
     })
     grid[1][1][0] = 1
     const simulation = new Simulation()
@@ -24,7 +24,7 @@ module('Game of Life', () => {
   test('cell with 2 neighbors stays alive', assert => {
     const grid = new Grid()
     grid.init({
-      dish_settings: dish2DSettings
+      dishSettings: dish2DSettings
     })
     grid[1][1][0] = 1
     grid[1][2][0] = 1
@@ -38,7 +38,7 @@ module('Game of Life', () => {
   test('cell with 3 neighbors stays alive', assert => {
     const grid = new Grid()
     grid.init({
-      dish_settings: dish2DSettings
+      dishSettings: dish2DSettings
     })
     grid[1][1][0] = 1
     grid[1][2][0] = 1
@@ -53,7 +53,7 @@ module('Game of Life', () => {
   test('cell with more than 3 neighbors dies', assert => {
     const grid = new Grid()
     grid.init({
-      dish_settings: dish2DSettings
+      dishSettings: dish2DSettings
     })
     grid[1][1][0] = 1
     grid[1][2][0] = 1
@@ -69,7 +69,7 @@ module('Game of Life', () => {
   test('space with 3 neighbors becomes alive', assert => {
     const grid = new Grid()
     grid.init({
-      dish_settings: dish2DSettings
+      dishSettings: dish2DSettings
     })
     grid[1][2][0] = 1
     grid[1][0][0] = 1
