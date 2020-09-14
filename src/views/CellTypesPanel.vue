@@ -10,7 +10,7 @@
       <v-expansion-panels multiple>
         <CellTypeConfig
           v-for="cellType in cellTypes"
-          v-bind:key="cellType.name"
+          v-bind:key="cellType.id"
           :name="cellType.name"
           :id="cellType.id"
           :color="cellType.color"

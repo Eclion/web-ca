@@ -10,7 +10,7 @@ export default class CellType {
   constructor(params: CellType = {} as CellType) {
     const {
       id = 0,
-      name = "empty",
+      name = "Empty",
       color = "#000000",
       initialCount = -1,
       distribution = null as any
