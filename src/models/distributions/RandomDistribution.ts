@@ -1,12 +1,11 @@
-import Distribution from './Distribution'
+import Distribution from "./Distribution"
 export default class RandomDistribution implements Distribution {
-  type: string = 'random';
+  type = "random";
 
   apply(cells: Array<Array<Array<number>>>, cellCount: number): Array<Array<Array<number>>> {
     // TODO: take in account the non empty places
     const width = cells.length;
     const height = cells[0].length;
-    const depth = cells[0][0].length;
     const ratio = cellCount / (width * height);
     for (let i = 0; i < width; i++) {
       for (let j = 0; j < height; j++) {

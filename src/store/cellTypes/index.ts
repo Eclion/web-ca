@@ -2,6 +2,7 @@ import CellType from "@/models/CellType";
 import { Module } from "vuex";
 import { CellTypeState } from "./types";
 import { RootState } from "../types";
+import RandomDistribution from '@/models/distributions/RandomDistribution';
 
 export const cellTypes: Module<CellTypeState, RootState> = {
   namespaced: true,
@@ -12,7 +13,8 @@ export const cellTypes: Module<CellTypeState, RootState> = {
       id: 1,
       name: "Live",
       color: "#FFFFFF",
-      initialCount: 100
+      initialCount: 100,
+      distribution: new RandomDistribution()
     } as CellType)
     )
   },

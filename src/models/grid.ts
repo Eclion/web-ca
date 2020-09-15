@@ -1,13 +1,13 @@
 import { rangeArray } from "@/models/utils";
-import CellType from './CellType';
+import CellType from "./CellType";
 
 export class Grid {
   cells: Array<Array<Array<number>>> = Array<Array<Array<number>>>();
-  width: number = -1;
-  height: number = -1;
-  depth: number = -1;
+  width = -1;
+  height = -1;
+  depth = -1;
 
-  constructor(cells:Array<Array<Array<number>>>) {
+  constructor(cells: Array<Array<Array<number>>>) {
     if (cells != null) {
       this.cells = cells;
       this.width = cells.length;
@@ -15,7 +15,7 @@ export class Grid {
       this.depth = cells[0][0].length;
 
     }
-    return new Proxy(this, {
+    return new Proxy(this, { // TODO: update for typescript version
       get: (obj, key) => {
         if (typeof key === "string" && Number.isInteger(Number(key))) {
           // key is an index
@@ -30,9 +30,15 @@ export class Grid {
           return obj.depth;
         } else if (key === "cells") {
           return obj.cells;
+        } else if (key === "init") {
+          return obj.init;
+        } else if (key === "countNeighbors") {
+          return obj.countNeighbors;
+        } else if (key === "flatten") {
+          return obj.flatten;
         } else {
           // return obj[key];
-          console.error("Tried to get Grid." + String(key))
+          console.error("Tried to get Grid." + String(key));
           return undefined;
         }
       },
@@ -41,9 +47,21 @@ export class Grid {
           // key is an index
           obj.cells[Number(key)] = value;
           return true;
+        } else if (key === "cells") {
+          obj.cells = value;
+          return true;
+        } else if (key === "width") {
+          obj.width = value;
+          return true;
+        } else if (key === "height") {
+          obj.height = value;
+          return true;
+        } else if (key === "depth") {
+          obj.depth = value;
+          return true;
         } else {
           // obj[key] = value;
-          console.error("Tried to set Grid." + String(key))
+          console.error("Tried to set Grid." + String(key));
           return true;
         }
       }
@@ -51,15 +69,21 @@ export class Grid {
   }
 
   init(params: {
-    dishSettings: { width: number, height: number, depth: number },
+    dishDimensions: { width: number; height: number; depth: number };
     cellTypes: Array<CellType>
   }) {
-    const dimensions = params.dishSettings;
+    const dimensions = params.dishDimensions;
     if (dimensions === undefined) {
       return;
     }
-    this.cells = Array(dimensions.width)
-      .fill(Array(dimensions.height).fill(Array(dimensions.depth).fill(0)));
+    this.width = dimensions.width;
+    this.height = dimensions.height;
+    this.depth = dimensions.depth;
+
+    this.cells = Array(this.width).fill(0)
+      .map(() => Array(this.height).fill(0)
+        .map(() => Array(this.depth).fill(0))
+      );
     
     if (!("cellTypes" in params)) {
       return;
@@ -67,11 +91,11 @@ export class Grid {
 
     const cellTypes = params.cellTypes;
     for (const index in cellTypes) {
-      const cellType = cellTypes[index];
+      const cellType = new CellType(cellTypes[index]);
       if (cellType.name === "Empty") {
         continue;
       }
-      cellType.distribute(this.cells);
+      this.cells = cellType.distribute(this.cells);
     }
     // TODO: review performances between current implementation and
     //   Array(dimensions["height"] * dimensions["width"] * dimensions["depth"])
@@ -84,7 +108,7 @@ export class Grid {
     const dz = rangeArray(Math.max(0, z - 1), Math.min(this.depth - 1, z + 1));
 
     let cell = null;
-    const count: Record<string, number>  = {};
+    const count: Record<string, number> = {};
     for (const _x of dx) {
       for (const _y of dy) {
         for (const _z of dz) {
@@ -120,8 +144,9 @@ export class Grid {
   }
 
   flatten() {
-    const flattenedCells = Array(this.width)
-      .fill(Array(this.height).fill(0));
+    const flattenedCells = Array(this.width).fill(0)
+      .map(() => Array(this.height).fill(0)
+      );
 
     for (let i = 0; i < this.width; i++) {
       for (let j = 0; j < this.height; j++) {

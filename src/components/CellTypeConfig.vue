@@ -6,7 +6,7 @@
   -->
   <v-expansion-panel color="primary" :readonly="this.name === 'Empty'">
     <v-expansion-panel-header color="primary">
-      <v-col cols="2" style="padding:0">
+      <v-col cols="4" style="padding:0">
         <v-text-field
           v-model="name"
           hide-details
