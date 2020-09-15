@@ -47,7 +47,7 @@ describe("CellTypePanel.vue", () => {
 
     expect(ctConfigs.at(0).props("id")).toBe(0)
     expect(ctConfigs.at(0).props("name")).toBe("Empty")
-    expect(ctConfigs.at(0).props("color")).toBe("#000000")
+    expect(ctConfigs.at(0).props("color")).toBe("#333333")
     expect(ctConfigs.at(0).props("initialCount")).toBe(-1)
 
     expect(ctConfigs.at(1).props("id")).toBe(1)

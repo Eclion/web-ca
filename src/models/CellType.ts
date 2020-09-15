@@ -11,7 +11,7 @@ export default class CellType {
     const {
       id = 0,
       name = "Empty",
-      color = "#000000",
+      color = "#333333",
       initialCount = -1,
       distribution = null as any
     } = params;
@@ -21,5 +21,12 @@ export default class CellType {
     this.color = color;
     this.initialCount = initialCount;
     this.distribution = distribution;
+  }
+
+  distribute(cells: Array<Array<Array<number>>>): Array<Array<Array<number>>> {
+    if (this.distribution === null || this.initialCount <= 0) {
+      return cells;
+    }
+    return this.distribution.apply(cells, this.initialCount);
   }
 }
