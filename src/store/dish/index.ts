@@ -2,7 +2,6 @@ import { Module } from "vuex";
 import { DishState } from "./types";
 import { RootState } from "../types";
 
-
 export const dish: Module<DishState, RootState> = {
   namespaced: true,
   state: {
@@ -30,4 +29,4 @@ export const dish: Module<DishState, RootState> = {
       state.depth = depth;
     }
   }
-}; 
+};

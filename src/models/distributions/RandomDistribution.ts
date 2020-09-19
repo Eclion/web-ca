@@ -1,8 +1,11 @@
-import Distribution from "./Distribution"
+import Distribution from "./Distribution";
 export default class RandomDistribution implements Distribution {
   type = "random";
 
-  apply(cells: Array<Array<Array<number>>>, cellCount: number): Array<Array<Array<number>>> {
+  apply(
+    cells: Array<Array<Array<number>>>,
+    cellCount: number
+  ): Array<Array<Array<number>>> {
     // TODO: take in account the non empty places
     const width = cells.length;
     const height = cells[0].length;

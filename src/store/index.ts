@@ -11,6 +11,8 @@ export default new Vuex.Store({
   mutations: {},
   actions: {},
   modules: {
-    cellTypes, displayedCells, dish
+    cellTypes,
+    displayedCells,
+    dish
   }
 });

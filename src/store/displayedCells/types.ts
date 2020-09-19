@@ -1,3 +1,3 @@
 export interface CellGridState {
-  displayedCells: Array<Array<number>>
+  displayedCells: Array<Array<number>>;
 }

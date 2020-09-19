@@ -14,8 +14,7 @@ export const displayedCells: Module<CellGridState, RootState> = {
   },
   mutations: {
     update(state, displayedCells) {
-      state.displayedCells = displayedCells
+      state.displayedCells = displayedCells;
     }
   }
-
-}
+};

@@ -1,5 +1,5 @@
 import Distribution from "@/models/distributions/Distribution";
-import RandomDistribution from './distributions/RandomDistribution';
+import RandomDistribution from "./distributions/RandomDistribution";
 
 export default class CellType {
   id: number;
@@ -21,7 +21,7 @@ export default class CellType {
     this.name = name;
     this.color = color;
     this.initialCount = initialCount;
-    if (distribution !== null && typeof (distribution) === "object") {
+    if (distribution !== null && typeof distribution === "object") {
       switch (distribution.type) {
         case "random":
           this.distribution = new RandomDistribution();
@@ -35,7 +35,9 @@ export default class CellType {
     }
   }
 
-  public distribute(cells: Array<Array<Array<number>>>): Array<Array<Array<number>>> {
+  public distribute(
+    cells: Array<Array<Array<number>>>
+  ): Array<Array<Array<number>>> {
     if (this.distribution === null || this.initialCount <= 0) {
       return cells;
     }

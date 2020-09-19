@@ -13,9 +13,9 @@ export class Grid {
       this.width = cells.length;
       this.height = cells[0].length;
       this.depth = cells[0][0].length;
-
     }
-    return new Proxy(this, { // TODO: update for typescript version
+    return new Proxy(this, {
+      // TODO: update for typescript version
       get: (obj, key) => {
         if (typeof key === "string" && Number.isInteger(Number(key))) {
           // key is an index
@@ -70,7 +70,7 @@ export class Grid {
 
   init(params: {
     dishDimensions: { width: number; height: number; depth: number };
-    cellTypes: Array<CellType>
+    cellTypes: Array<CellType>;
   }) {
     const dimensions = params.dishDimensions;
     if (dimensions === undefined) {
@@ -80,11 +80,14 @@ export class Grid {
     this.height = dimensions.height;
     this.depth = dimensions.depth;
 
-    this.cells = Array(this.width).fill(0)
-      .map(() => Array(this.height).fill(0)
-        .map(() => Array(this.depth).fill(0))
+    this.cells = Array(this.width)
+      .fill(0)
+      .map(() =>
+        Array(this.height)
+          .fill(0)
+          .map(() => Array(this.depth).fill(0))
       );
-    
+
     if (!("cellTypes" in params)) {
       return;
     }
@@ -100,7 +103,6 @@ export class Grid {
     // TODO: review performances between current implementation and
     //   Array(dimensions["height"] * dimensions["width"] * dimensions["depth"])
   }
-
 
   countNeighbors(x: number, y: number, z: number) {
     const dx = rangeArray(Math.max(0, x - 1), Math.min(this.width - 1, x + 1));
@@ -144,9 +146,9 @@ export class Grid {
   }
 
   flatten() {
-    const flattenedCells = Array(this.width).fill(0)
-      .map(() => Array(this.height).fill(0)
-      );
+    const flattenedCells = Array(this.width)
+      .fill(0)
+      .map(() => Array(this.height).fill(0));
 
     for (let i = 0; i < this.width; i++) {
       for (let j = 0; j < this.height; j++) {
