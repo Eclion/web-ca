@@ -11,9 +11,10 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from "vue-property-decorator";
+import { Vue, Component, Watch } from "vue-property-decorator";
 import Parameters from "@/views/Parameters.vue";
 import Dish from "@/components/Dish.vue";
+import { Getter } from "vuex-class";
 
 @Component({
   components: {
@@ -27,6 +28,19 @@ export default class SimulationPage extends Vue {
   isRunning = false;
   remainingSteps = 0;
 
+  @Getter("dimensions", { namespace: "dish" })
+  dimensions!: {
+    width: number;
+    height: number;
+    depth: number;
+  };
+
+  @Watch("dimensions")
+  private resetSimulation() {
+    console.log("reset");
+    this.init();
+  }
+
   init() {
     this.isRunning = false;
     this.remainingSteps = 0;
@@ -35,7 +49,7 @@ export default class SimulationPage extends Vue {
       JSON.stringify({
         action: "init",
         params: {
-          dishDimensions: { width: 100, height: 100, depth: 1 },
+          dishDimensions: this.dimensions,
           cellTypes: cellTypes
         }
       })

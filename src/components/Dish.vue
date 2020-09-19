@@ -11,22 +11,15 @@ import { Getter } from "vuex-class";
 export default class Dish extends Vue {
   @Getter("colorMap", { namespace: "cellTypes" }) colorMap!: Array<string>;
   @Getter("get", { namespace: "displayedCells" }) displayedCells!: Array<Array<number>>;
+  @Getter("dimensions", { namespace: "dish" }) dimensions!: { width: number; height: number; depth:number };
 
-  @Watch("colorMap")
-  private drawAfterColorUpdate() {
-    this.draw();
-  }
-
-  @Watch("displayedCells")
-  private drawAfterCellUpdate() {
-    this.draw();
-  }
 
   // https://github.com/escodebar/life/blob/master/src/components/Game.vue
+  @Watch("colorMap")
+  @Watch("displayedCells")
   draw() {
-    const absciss = this.displayedCells.length;
-    if (absciss <= 0) return;
-    const ordinate = this.displayedCells[0].length;
+    const absciss = this.dimensions.width;
+    const ordinate = this.dimensions.height;
     const dish = this.$refs.dish as HTMLCanvasElement;
     const context = dish.getContext("2d");
     if (dish.parentElement === null || context === null) {
