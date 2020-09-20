@@ -41,6 +41,34 @@ export const cellTypes: Module<CellTypeState, RootState> = {
     add(state, cellType: CellType) {
       state.cellTypes.push(cellType);
     },
+    new(state) {
+      const newId =
+        state.cellTypes
+          .map(ct => ct.id)
+          .reduce((id1, id2) => Math.max(id1, id2)) + 1;
+      state.cellTypes.push(
+        new CellType({
+          id: newId,
+          name: "Type " + newId,
+          // https://stackoverflow.com/questions/1152024/best-way-to-generate-a-random-color-in-javascript/1152508
+          color:
+            "#" +
+            (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6),
+          initialCount: 100,
+          distribution: new RandomDistribution()
+        } as CellType)
+      );
+    },
+    delete(state, id: number) {
+      const cellType = state.cellTypes.filter(
+        _cellType => _cellType.id === id
+      )[0];
+
+      const index = state.cellTypes.indexOf(cellType);
+
+      state.cellTypes.splice(index, index);
+      state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
+    },
     update(state, cellType: CellType) {
       if (
         state.cellTypes
@@ -57,7 +85,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       const index = state.cellTypes.indexOf(cellType);
 
-      state.cellTypes.splice(index, index + 1);
+      state.cellTypes.splice(index, index);
 
       cellType.color = data.color;
       state.cellTypes.push(cellType);
@@ -70,7 +98,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       const index = state.cellTypes.indexOf(cellType);
 
-      state.cellTypes.splice(index, index + 1);
+      state.cellTypes.splice(index, index);
 
       cellType.initialCount = data.initialCount;
       state.cellTypes.push(cellType);

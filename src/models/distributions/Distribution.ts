@@ -3,6 +3,7 @@ export default interface Distribution {
 
   apply(
     cells: Array<Array<Array<number>>>,
+    cellId: number,
     cellCount: number
   ): Array<Array<Array<number>>>;
 }

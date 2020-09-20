@@ -41,6 +41,6 @@ export default class CellType {
     if (this.distribution === null || this.initialCount <= 0) {
       return cells;
     }
-    return this.distribution.apply(cells, this.initialCount);
+    return this.distribution.apply(cells, this.id, this.initialCount);
   }
 }

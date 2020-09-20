@@ -5,8 +5,8 @@ import { RootState } from "../types";
 export const dish: Module<DishState, RootState> = {
   namespaced: true,
   state: {
-    width: 100,
-    height: 100,
+    width: 30,
+    height: 30,
     depth: 1
   },
   getters: {

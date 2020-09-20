@@ -26,6 +26,10 @@ const performStep = function (grid, rules) {
       for (var z of rangeArray(0, grid.depth - 1)) {
         var cell = grid[x][y][z]
         var neighbors = grid.countNeighbors(x, y, z)
+        if (rules[cell] === undefined) {
+          nextCells[x][y][z] = cell;
+          continue;
+        }
         for (var rule of rules[cell]) {
           var nextCell = rule(neighbors)
           if (nextCell !== cell) { break }
