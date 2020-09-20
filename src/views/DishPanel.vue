@@ -6,7 +6,7 @@
         <v-col cols="3">
           <v-card-text>Dish:</v-card-text>
         </v-col>
-        <v-col cols="2">
+        <v-col cols="3">
           <v-text-field
             type="number"
             label="Height"
@@ -14,7 +14,7 @@
             v-on:input="updateHeight(Number($event))"
           ></v-text-field>
         </v-col>
-        <v-col cols="2">
+        <v-col cols="3">
           <v-text-field
             type="number"
             label="Width"
@@ -22,7 +22,7 @@
             v-on:input="updateWidth(Number($event))"
           ></v-text-field>
         </v-col>
-        <v-col cols="2">
+        <v-col cols="3">
           <v-text-field
             type="number"
             label="Depth"

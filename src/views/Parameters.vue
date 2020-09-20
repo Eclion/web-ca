@@ -1,7 +1,8 @@
 <template>
   <v-expansion-panels multiple>
-    <CellTypesPanel />
     <DishPanel />
+    <CellTypesPanel />
+    <SimulationPanel />
   </v-expansion-panels>
 </template>
 
@@ -9,11 +10,13 @@
 import { Vue, Component } from "vue-property-decorator";
 import CellTypesPanel from "@/views/CellTypesPanel.vue";
 import DishPanel from "@/views/DishPanel.vue";
+import SimulationPanel from "@/views/SimulationPanel.vue";
 
 @Component({
   components: {
     CellTypesPanel,
-    DishPanel
+    DishPanel,
+    SimulationPanel
   }
 })
 export default class Parameters extends Vue {}

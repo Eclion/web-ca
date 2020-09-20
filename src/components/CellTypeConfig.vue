@@ -31,15 +31,19 @@
         <v-col cols="6">
           <v-card-text>Number of cells:</v-card-text>
         </v-col>
-        <v-col cols="2">
-          <v-text-field type="number" v-model="initialCount"></v-text-field>
+        <v-col cols="3">
+          <v-text-field
+            type="number"
+            :value="initialCount"
+            v-on:input="updateInitialCount(Number($event))"
+          ></v-text-field>
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="6">
           <v-card-text>Cell distribution:</v-card-text>
         </v-col>
-        <v-col cols="2">
+        <v-col cols="4">
           <!--
         menu dropdown
         + v-ifs
@@ -68,6 +72,13 @@ export default class CellTypeConf extends Vue {
 
   updateColor(_color: string) {
     this.$store.commit("cellTypes/updateColor", { id: this.id, color: _color });
+  }
+
+  updateInitialCount(_count: number) {
+    this.$store.commit("cellTypes/updateInitialCount", {
+      id: this.id,
+      initialCount: _count
+    });
   }
 }
 </script>

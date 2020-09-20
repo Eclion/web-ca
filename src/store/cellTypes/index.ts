@@ -62,6 +62,19 @@ export const cellTypes: Module<CellTypeState, RootState> = {
       cellType.color = data.color;
       state.cellTypes.push(cellType);
       state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
+    },
+    updateInitialCount(state, data: { id: number; initialCount: number }) {
+      const cellType = state.cellTypes.filter(
+        _cellType => _cellType.id === data.id
+      )[0];
+
+      const index = state.cellTypes.indexOf(cellType);
+
+      state.cellTypes.splice(index, index + 1);
+
+      cellType.initialCount = data.initialCount;
+      state.cellTypes.push(cellType);
+      state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
     }
   }
 };

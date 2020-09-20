@@ -5,7 +5,22 @@
       <Parameters />
     </v-col>
     <v-col cols="5">
-      <Dish />
+      <v-row>
+        <v-btn-toggle>
+          <v-btn color="primary" depressed @click="updateStatus('running')">
+            <v-icon>mdi-play</v-icon>
+          </v-btn>
+          <v-btn color="primary" depressed @click="updateStatus('stopped')">
+            <v-icon>mdi-stop</v-icon>
+          </v-btn>
+          <v-btn color="primary" depressed @click="updateStatus('init')">
+            <v-icon>mdi-replay</v-icon>
+          </v-btn>
+        </v-btn-toggle>
+      </v-row>
+      <v-row>
+        <Dish />
+      </v-row>
     </v-col>
   </v-row>
 </template>
@@ -14,7 +29,8 @@
 import { Vue, Component, Watch } from "vue-property-decorator";
 import Parameters from "@/views/Parameters.vue";
 import Dish from "@/components/Dish.vue";
-import { Getter } from "vuex-class";
+import { Getter, State } from "vuex-class";
+import CellType from "@/models/CellType";
 
 @Component({
   components: {
@@ -24,9 +40,10 @@ import { Getter } from "vuex-class";
 })
 export default class SimulationPage extends Vue {
   worker = new Worker("../workers/Simulation.worker.js", { type: "module" });
-  // TODO move below to store
-  isRunning = false;
-  remainingSteps = 0;
+
+  @State("status", { namespace: "simulation" }) status!: string;
+  @State("remainingStepCount", { namespace: "simulation" })
+  remainingStepCount!: number;
 
   @Getter("dimensions", { namespace: "dish" })
   dimensions!: {
@@ -34,39 +51,58 @@ export default class SimulationPage extends Vue {
     height: number;
     depth: number;
   };
+  @Getter("all", { namespace: "cellTypes" }) cellTypes!: Array<CellType>;
 
   @Watch("dimensions")
+  @Watch("cellTypes")
   private resetSimulation() {
-    console.log("reset");
     this.init();
   }
 
   init() {
-    this.isRunning = false;
-    this.remainingSteps = 0;
-    const cellTypes = this.$store.getters["cellTypes/all"];
     this.worker.postMessage(
       JSON.stringify({
         action: "init",
         params: {
           dishDimensions: this.dimensions,
-          cellTypes: cellTypes
+          cellTypes: this.cellTypes
         }
       })
     );
   }
 
   runSimulation() {
-    this.isRunning = true;
+    this.$store.commit("simulation/setStatus", "running");
     this.worker.postMessage(JSON.stringify({ action: "run" }));
   }
 
   stopSimulation() {
-    this.isRunning = false;
+    this.$store.commit("simulation/status", "stopped");
   }
 
   beforeDestroy() {
     this.worker.terminate();
+  }
+
+  updateStatus(status: string) {
+    if (this.status === status && status === "init") {
+      this.init();
+    }
+    this.$store.commit("simulation/setStatus", status);
+  }
+
+  @Watch("status")
+  private watchStatus() {
+    switch (this.status) {
+      case "running":
+        this.runSimulation();
+        break;
+      case "init":
+        this.init();
+        break;
+      default:
+        break;
+    }
   }
 
   mounted() {
@@ -75,45 +111,13 @@ export default class SimulationPage extends Vue {
         return;
       }
       this.$store.commit("displayedCells/update", event.data.cells);
-      this.remainingSteps -= 1;
-      if (this.remainingSteps > 0 && this.isRunning) {
+
+      if (this.status === "running") {
+        this.$store.commit("simulation/decrementStepCount");
         this.worker.postMessage(JSON.stringify({ action: "run" }));
       }
     };
     this.init();
-
-    /*
-        this.unwatchState = this.$store.watch(
-      (state, getters) => {
-        return getters['simulations/state'](this.id)
-      },
-      (newVal, oldVal) => {
-        switch (newVal) {
-          case ('running'):
-            this.isRunning = true
-            this.runSimulation()
-            break
-          case ('init'):
-            this.init()
-            this.isRunning = false
-            break
-          default:
-            this.isRunning = false
-            break
-        }
-      }
-    )
-    this.unwatchParameters = this.$store.watch(
-      (state, getters) => {
-        return getters['simulations/parameters'](this.id).version
-      },
-      (newVal, oldVal) => {
-        this.parameters = this.$store.getters['simulations/parameters'](this.id)
-        this.init()
-      }
-    )
-  },
-    */
   }
 }
 </script>

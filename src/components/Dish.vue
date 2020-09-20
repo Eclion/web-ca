@@ -10,9 +10,14 @@ import { Getter } from "vuex-class";
 @Component
 export default class Dish extends Vue {
   @Getter("colorMap", { namespace: "cellTypes" }) colorMap!: Array<string>;
-  @Getter("get", { namespace: "displayedCells" }) displayedCells!: Array<Array<number>>;
-  @Getter("dimensions", { namespace: "dish" }) dimensions!: { width: number; height: number; depth:number };
-
+  @Getter("get", { namespace: "displayedCells" }) displayedCells!: Array<
+    Array<number>
+  >;
+  @Getter("dimensions", { namespace: "dish" }) dimensions!: {
+    width: number;
+    height: number;
+    depth: number;
+  };
 
   // https://github.com/escodebar/life/blob/master/src/components/Game.vue
   @Watch("colorMap")

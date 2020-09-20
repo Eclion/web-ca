@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import { displayedCells } from "./displayedCells/index";
 import { cellTypes } from "./cellTypes/index";
 import { dish } from "./dish/index";
+import { simulation } from "./simulation/index";
 
 Vue.use(Vuex);
 
@@ -13,6 +14,7 @@ export default new Vuex.Store({
   modules: {
     cellTypes,
     displayedCells,
-    dish
+    dish,
+    simulation
   }
 });
