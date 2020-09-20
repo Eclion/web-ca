@@ -1,33 +1,20 @@
 <template>
-  <v-row>
-    <v-col cols="1" />
-    <v-col cols="5">
-      <Parameters />
-    </v-col>
-    <v-col cols="5">
-      <v-row>
-        <v-btn-toggle>
-          <v-btn color="primary" depressed @click="updateStatus('running')">
-            <v-icon>mdi-play</v-icon>
-          </v-btn>
-          <v-btn color="primary" depressed @click="updateStatus('stopped')">
-            <v-icon>mdi-stop</v-icon>
-          </v-btn>
-          <v-btn color="primary" depressed @click="updateStatus('init')">
-            <v-icon>mdi-replay</v-icon>
-          </v-btn>
-        </v-btn-toggle>
-      </v-row>
-      <v-row>
-        <Dish />
-      </v-row>
-    </v-col>
-  </v-row>
+  <v-container>
+    <v-row align-content="center">
+      <v-col cols="7">
+        <Parameters />
+      </v-col>
+      <v-col cols="5">
+        <SimulationDisplay />
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Watch } from "vue-property-decorator";
 import Parameters from "@/views/Parameters.vue";
+import SimulationDisplay from "@/views/SimulationDisplay.vue";
 import Dish from "@/components/Dish.vue";
 import { Getter, State } from "vuex-class";
 import CellType from "@/models/CellType";
@@ -35,7 +22,8 @@ import CellType from "@/models/CellType";
 @Component({
   components: {
     Parameters,
-    Dish
+    Dish,
+    SimulationDisplay
   }
 })
 export default class SimulationPage extends Vue {
@@ -69,6 +57,7 @@ export default class SimulationPage extends Vue {
         }
       })
     );
+    this.$store.commit("simulation/setStatus", "");
   }
 
   runSimulation() {
@@ -82,13 +71,6 @@ export default class SimulationPage extends Vue {
 
   beforeDestroy() {
     this.worker.terminate();
-  }
-
-  updateStatus(status: string) {
-    if (this.status === status && status === "init") {
-      this.init();
-    }
-    this.$store.commit("simulation/setStatus", status);
   }
 
   @Watch("status")

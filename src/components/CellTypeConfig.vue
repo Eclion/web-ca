@@ -5,7 +5,7 @@
     validation icon ?
   -->
   <v-expansion-panel color="primary" :readonly="this.name === 'Empty'">
-    <v-expansion-panel-header color="primary">
+    <v-expansion-panel-header color="primary" expand-icon="">
       <v-col cols="4" style="padding:0">
         <v-text-field
           v-model="name"
