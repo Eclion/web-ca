@@ -70,7 +70,7 @@ import ColorPickerPopup from "@/components/ColorPickerPopup.vue";
     ColorPickerPopup
   }
 })
-export default class CellTypeConf extends Vue {
+export default class CellTypeConfig extends Vue {
   @Prop() id!: number | 0;
   @Prop() name!: string | "";
   @Prop() color!: string | "";

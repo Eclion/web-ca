@@ -35,6 +35,9 @@ export const cellTypes: Module<CellTypeState, RootState> = {
         }),
         {}
       );
+    },
+    names(state) {
+      return state.cellTypes.map(ct => ct.name);
     }
   },
   mutations: {
@@ -42,10 +45,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
       state.cellTypes.push(cellType);
     },
     new(state) {
-      const newId =
-        state.cellTypes
-          .map(ct => ct.id)
-          .reduce((id1, id2) => Math.max(id1, id2)) + 1;
+      const newId = Math.max(0, ...state.cellTypes.map(ct => ct.id)) + 1;
       state.cellTypes.push(
         new CellType({
           id: newId,

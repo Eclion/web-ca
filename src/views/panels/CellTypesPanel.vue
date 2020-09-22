@@ -1,7 +1,7 @@
 <template>
   <v-expansion-panel>
     <v-expansion-panel-header color="primary">
-      <v-row>
+      <v-row align="center">
         <v-col cols="6">Cells types</v-col>
         <v-spacer />
         <v-col cols="2">
