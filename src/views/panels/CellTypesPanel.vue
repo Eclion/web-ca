@@ -1,12 +1,17 @@
 <template>
   <v-expansion-panel>
-    <v-expansion-panel-header color="primary"
-      >Cells types</v-expansion-panel-header
-    >
+    <v-expansion-panel-header color="primary">
+      <v-row>
+        <v-col cols="6">Cells types</v-col>
+        <v-spacer />
+        <v-col cols="2">
+          <v-btn color="primary" depressed @click.stop @click="add()">
+            <v-icon>mdi-plus</v-icon>
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-expansion-panel-header>
     <v-expansion-panel-content color="primary">
-      <!--
-            add/remove buttons
-          -->
       <v-expansion-panels multiple>
         <CellTypeConfig
           v-for="cellType in cellTypes"
@@ -36,5 +41,9 @@ import { State } from "vuex-class";
 export default class CellTypesPanel extends Vue {
   @State("cellTypes", { namespace: "cellTypes" })
   public cellTypes!: Array<CellType>;
+
+  add() {
+    this.$store.commit("cellTypes/new");
+  }
 }
 </script>

@@ -6,25 +6,32 @@
   -->
   <v-expansion-panel color="primary" :readonly="this.name === 'Empty'">
     <v-expansion-panel-header color="primary" expand-icon="">
-      <v-col cols="4" style="padding:0">
-        <v-text-field
-          v-model="name"
-          hide-details
-          solo
-          background-color="primary"
-          flat
-          @click.stop
-          :disabled="this.name === 'Empty'"
-        ></v-text-field>
-      </v-col>
-      <v-spacer />
-      <v-col cols="1" style="padding:0">
-        <!-- TODO Simpler color picker -->
-        <ColorPickerPopup
-          :color="this.color"
-          v-on:update:color="updateColor($event)"
-        />
-      </v-col>
+      <v-row align-content="end">
+        <v-col cols="4" style="padding:0">
+          <v-text-field
+            v-model="name"
+            hide-details
+            solo
+            background-color="primary"
+            flat
+            @click.stop
+            :disabled="this.name === 'Empty'"
+          ></v-text-field>
+        </v-col>
+        <v-spacer />
+        <v-col cols="2" v-if="this.name !== 'Empty'">
+          <v-btn color="secondary" depressed @click="deleteCellType()">
+            <v-icon>mdi-minus</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col cols="1" style="padding:0" align-self="center">
+          <!-- TODO Simpler color picker -->
+          <ColorPickerPopup
+            :color="this.color"
+            v-on:update:color="updateColor($event)"
+          />
+        </v-col>
+      </v-row>
     </v-expansion-panel-header>
     <v-expansion-panel-content color="primary" v-if="this.name !== 'Empty'">
       <v-row>
@@ -79,6 +86,10 @@ export default class CellTypeConf extends Vue {
       id: this.id,
       initialCount: _count
     });
+  }
+
+  deleteCellType() {
+    this.$store.commit("cellTypes/delete", this.id);
   }
 }
 </script>
