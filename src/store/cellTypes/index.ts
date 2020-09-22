@@ -66,7 +66,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       const index = state.cellTypes.indexOf(cellType);
 
-      state.cellTypes.splice(index, index);
+      state.cellTypes.splice(index, 1);
       state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
     },
     update(state, cellType: CellType) {
@@ -85,7 +85,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       const index = state.cellTypes.indexOf(cellType);
 
-      state.cellTypes.splice(index, index);
+      state.cellTypes.splice(index, 1);
 
       cellType.color = data.color;
       state.cellTypes.push(cellType);
@@ -98,7 +98,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       const index = state.cellTypes.indexOf(cellType);
 
-      state.cellTypes.splice(index, index);
+      state.cellTypes.splice(index, 1);
 
       cellType.initialCount = data.initialCount;
       state.cellTypes.push(cellType);
