@@ -12,11 +12,13 @@
       </v-row>
     </v-expansion-panel-header>
     <v-expansion-panel-content color="primary">
-      <RuleConfig
-        v-for="rule in this.rules"
-        v-bind:key="rule.id"
-        :id="rule.id"
-      />
+      <draggable v-model="rules" style="min-width:100%;">
+        <RuleConfig
+          v-for="rule in this.rules"
+          v-bind:key="rule.id"
+          :id="rule.id"
+        />
+      </draggable>
     </v-expansion-panel-content>
   </v-expansion-panel>
 </template>
@@ -25,16 +27,21 @@
 import { Vue, Component } from "vue-property-decorator";
 import RuleConfig from "@/components/RuleConfig.vue";
 import Rule from "@/models/Rule";
-import { State } from "vuex-class";
+import draggable from "vuedraggable";
 
 @Component({
   components: {
-    RuleConfig
+    RuleConfig,
+    draggable
   }
 })
 export default class RulesPanel extends Vue {
-  @State("rules", { namespace: "rules" })
-  public rules!: Array<Rule>;
+  get rules(): Array<Rule> {
+    return this.$store.getters["rules/all"];
+  }
+  set rules(_rules: Array<Rule>) {
+    this.$store.commit("rules/replaceAll", _rules);
+  }
 
   add() {
     this.$store.commit("rules/new");

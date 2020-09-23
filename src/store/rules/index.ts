@@ -17,7 +17,11 @@ export const rules: Module<RuleState, RootState> = {
       ]
     */
   },
-  getters: {},
+  getters: {
+    all(state) {
+      return state.rules;
+    }
+  },
   mutations: {
     new(state) {
       const newId = Math.max(0, ...state.rules.map(rule => rule.id)) + 1;
@@ -33,7 +37,9 @@ export const rules: Module<RuleState, RootState> = {
       const index = state.rules.indexOf(rule);
 
       state.rules.splice(index, 1);
-      state.rules.sort((ct1, ct2) => ct1.id - ct2.id);
+    },
+    replaceAll(state, rules: Array<Rule>) {
+      state.rules = rules;
     }
   }
 };

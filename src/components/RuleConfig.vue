@@ -1,7 +1,9 @@
 <template>
   <v-container>
     <v-row align="center">
-      <v-col cols="1">{{ this.id }}</v-col>
+      <v-col cols="2">
+        {{ this.id }}
+      </v-col>
       <v-spacer />
       <v-col cols="2">
         <v-btn color="secondary" depressed @click="deleteRule()">
