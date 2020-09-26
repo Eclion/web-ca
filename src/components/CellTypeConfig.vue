@@ -7,7 +7,7 @@
   <v-expansion-panel color="primary" :readonly="this.name === 'Empty'">
     <v-expansion-panel-header color="primary" expand-icon="">
       <v-row align-content="end">
-        <v-col cols="4" style="padding:0">
+        <v-col cols="2" style="padding:0">
           <v-text-field
             v-model="name"
             hide-details
@@ -70,7 +70,7 @@ import ColorPickerPopup from "@/components/ColorPickerPopup.vue";
     ColorPickerPopup
   }
 })
-export default class CellTypeConf extends Vue {
+export default class CellTypeConfig extends Vue {
   @Prop() id!: number | 0;
   @Prop() name!: string | "";
   @Prop() color!: string | "";

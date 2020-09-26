@@ -35,6 +35,21 @@ export const cellTypes: Module<CellTypeState, RootState> = {
         }),
         {}
       );
+    },
+    names(state) {
+      return state.cellTypes.map(ct => ct.name);
+    },
+    nameFromId: (state) => (id: number): string => {
+      return state.cellTypes
+        .filter(ct => ct.id === id)
+        .map(ct => ct.name)
+      [0];
+    },
+    idFromName: (state) => (name: string): number => {
+      return state.cellTypes
+        .filter(ct => ct.name === name)
+        .map(ct => ct.id)
+      [0];
     }
   },
   mutations: {
@@ -42,10 +57,7 @@ export const cellTypes: Module<CellTypeState, RootState> = {
       state.cellTypes.push(cellType);
     },
     new(state) {
-      const newId =
-        state.cellTypes
-          .map(ct => ct.id)
-          .reduce((id1, id2) => Math.max(id1, id2)) + 1;
+      const newId = Math.max(0, ...state.cellTypes.map(ct => ct.id)) + 1;
       state.cellTypes.push(
         new CellType({
           id: newId,
@@ -89,7 +101,6 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       cellType.color = data.color;
       state.cellTypes.push(cellType);
-      state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
     },
     updateInitialCount(state, data: { id: number; initialCount: number }) {
       const cellType = state.cellTypes.filter(
@@ -102,7 +113,9 @@ export const cellTypes: Module<CellTypeState, RootState> = {
 
       cellType.initialCount = data.initialCount;
       state.cellTypes.push(cellType);
-      state.cellTypes.sort((ct1, ct2) => ct1.id - ct2.id);
+    },
+    replaceAll(state, cellTypes: Array<CellType>) {
+      state.cellTypes = cellTypes;
     }
   }
 };

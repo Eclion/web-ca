@@ -1,6 +1,11 @@
 import Distribution from "./Distribution";
-export default class RandomDistribution implements Distribution {
-  type = "random";
+import { Serializable } from "typescript-json-serializer";
+
+@Serializable()
+export default class RandomDistribution extends Distribution {
+  constructor() {
+    super("random");
+  }
 
   apply(
     cells: Array<Array<Array<number>>>,
