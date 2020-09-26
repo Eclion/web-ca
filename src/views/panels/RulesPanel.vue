@@ -17,6 +17,11 @@
           v-for="rule in this.rules"
           v-bind:key="rule.id"
           :id="rule.id"
+          :initialCellTypeId="rule.initialCellTypeId"
+          :nextCellTypeId="rule.nextCellTypeId"
+          :neighborCellTypeId="rule.neighborCellTypeId"
+          :neighborCount="rule.neighborCount"
+          :operator="rule.operator"
         />
       </draggable>
     </v-expansion-panel-content>

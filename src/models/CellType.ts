@@ -1,11 +1,31 @@
 import Distribution from "@/models/distributions/Distribution";
 import RandomDistribution from "./distributions/RandomDistribution";
+import {
+  JsonProperty,
+  Serializable,
+  serialize,
+  deserialize
+} from "typescript-json-serializer";
 
+const distributionPredicate = (distribution: Distribution) => {
+  if (!distribution || !distribution["type"]) {
+    console.error("Unable to determine the distribution type.");
+    return Distribution;
+  } else if (distribution["type"] === "random") {
+    return RandomDistribution;
+  } else {
+    console.error("Unkwon distribution type: " + distribution["type"]);
+    return Distribution;
+  }
+};
+
+@Serializable()
 export default class CellType {
-  id: number;
-  name: string;
-  color: string;
-  initialCount: number;
+  @JsonProperty() id: number;
+  @JsonProperty() name: string;
+  @JsonProperty() color: string;
+  @JsonProperty() initialCount: number;
+  @JsonProperty({ predicate: distributionPredicate })
   distribution: Distribution;
 
   constructor(params: CellType = {} as CellType) {
@@ -42,5 +62,15 @@ export default class CellType {
       return cells;
     }
     return this.distribution.apply(cells, this.id, this.initialCount);
+  }
+
+  toJSON(): string {
+    const object = serialize(this);
+    return JSON.stringify(object);
+  }
+
+  static fromJSON(jsonString: string): CellType {
+    const object = JSON.parse(jsonString);
+    return deserialize<CellType>(object, CellType);
   }
 }

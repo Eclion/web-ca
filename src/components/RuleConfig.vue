@@ -14,23 +14,37 @@
     <v-row align="center">
       <v-col cols="3">When cell is</v-col>
       <v-col cols="3">
-        <v-select flat v-model="selectedCellType" :items="cellTypeNames" />
+        <v-select flat v-model="initialCellType" :items="cellTypeNames" />
       </v-col>
       <v-col cols="2">:</v-col>
     </v-row>
     <v-row align="center">
-      <v-col cols="4">If the neighbor count</v-col>
+      <v-col cols="2">If the</v-col>
+      <v-col cols="3">
+        <v-select flat v-model="neighborCellType" :items="cellTypeNames" />
+      </v-col>
+      <v-col cols="3">neighbor count</v-col>
       <v-col cols="2">
-        <v-select flat v-model="selectedOperator" :items="operators" />
+        <v-select
+          flat
+          :value="operator"
+          :items="operators"
+          v-on:input="updateOperator($event)"
+        />
       </v-col>
       <v-col cols="2">
-        <v-text-field flat type="number" v-model="neighborCount" />
+        <v-text-field
+          flat
+          type="number"
+          :value="neighborCount"
+          v-on:input="updateNeighborCount(Number($event))"
+        />
       </v-col>
     </v-row>
     <v-row align="center">
       <v-col cols="3">The cell becomes</v-col>
       <v-col cols="3">
-        <v-select flat v-model="selectedNewCellType" :items="cellTypeNames" />
+        <v-select flat v-model="nextCellType" :items="cellTypeNames" />
       </v-col>
       <v-col cols="2">cell.</v-col>
     </v-row>
@@ -45,16 +59,70 @@ import Rule from "@/models/Rule";
 @Component
 export default class RuleConfig extends Vue {
   @Prop() id!: number | 0;
-  @Getter("names", { namespace: "cellTypes" }) cellTypeNames!: Array<string>;
-  operators: string[] = Rule.operators;
+  @Prop() initialCellTypeId!: number | 0;
+  @Prop() nextCellTypeId!: number | 0;
+  @Prop() neighborCellTypeId!: number | 0;
+  @Prop() neighborCount!: number | 0;
+  @Prop() operator!: string | "";
 
-  selectedCellType = "Empty";
-  selectedOperator = "==";
-  selectedNewCellType = "Empty";
-  neighborCount = "";
+  @Getter("names", { namespace: "cellTypes" }) cellTypeNames!: Array<string>;
+  @Getter("nameFromId", { namespace: "cellTypes" }) getCellTypeNameFromId!: (
+    id: number
+  ) => string;
+  @Getter("idFromName", { namespace: "cellTypes" }) getCellTypeIdFromName!: (
+    name: string
+  ) => number;
+
+  operators: string[] = Rule.operators;
 
   deleteRule() {
     this.$store.commit("rules/delete", this.id);
+  }
+
+  private updateRule(field: string, name: string) {
+    const cellTypeId = this.getCellTypeIdFromName(name);
+    this.$store.commit("rules/updateRule", {
+      id: this.id,
+      key: field,
+      value: cellTypeId
+    });
+  }
+
+  get initialCellType() {
+    return this.getCellTypeNameFromId(this.initialCellTypeId);
+  }
+  set initialCellType(name) {
+    this.updateRule("initialCellTypeId", name);
+  }
+
+  get nextCellType() {
+    return this.getCellTypeNameFromId(this.nextCellTypeId);
+  }
+  set nextCellType(name) {
+    this.updateRule("nextCellTypeId", name);
+  }
+
+  get neighborCellType() {
+    return this.getCellTypeNameFromId(this.neighborCellTypeId);
+  }
+  set neighborCellType(name) {
+    this.updateRule("neighborCellTypeId", name);
+  }
+
+  updateOperator(_operator: string) {
+    this.$store.commit("rules/updateRule", {
+      id: this.id,
+      key: "operator",
+      value: _operator
+    });
+  }
+
+  updateNeighborCount(count: number) {
+    this.$store.commit("rules/updateRule", {
+      id: this.id,
+      key: "neighborCount",
+      value: count
+    });
   }
 }
 </script>

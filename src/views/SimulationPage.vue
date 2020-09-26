@@ -18,6 +18,8 @@ import SimulationDisplay from "@/views/SimulationDisplay.vue";
 import Dish from "@/components/Dish.vue";
 import { Getter, State } from "vuex-class";
 import CellType from "@/models/CellType";
+import Rule from "@/models/Rule";
+import WorkerMessage from "@/models/WorkerMessage";
 
 @Component({
   components: {
@@ -27,7 +29,7 @@ import CellType from "@/models/CellType";
   }
 })
 export default class SimulationPage extends Vue {
-  worker = new Worker("../workers/Simulation.worker.js", { type: "module" });
+  worker = new Worker("../workers/Simulation.worker.ts", { type: "module" });
 
   @State("status", { namespace: "simulation" }) status!: string;
   @State("remainingStepCount", { namespace: "simulation" })
@@ -40,6 +42,7 @@ export default class SimulationPage extends Vue {
     depth: number;
   };
   @Getter("all", { namespace: "cellTypes" }) cellTypes!: Array<CellType>;
+  @Getter("all", { namespace: "rules" }) rules!: Array<Rule>;
 
   @Watch("dimensions")
   @Watch("cellTypes")
@@ -47,22 +50,35 @@ export default class SimulationPage extends Vue {
     this.init();
   }
 
+  @Watch("rules")
+  private propagateRule() {
+    this.worker.postMessage(
+      new WorkerMessage({
+        action: "rule update",
+        rules: this.rules
+      } as WorkerMessage).toJSON()
+    );
+  }
+
   init() {
     this.worker.postMessage(
-      JSON.stringify({
+      new WorkerMessage({
         action: "init",
-        params: {
-          dishDimensions: this.dimensions,
-          cellTypes: this.cellTypes
-        }
-      })
+        dishDimensions: this.dimensions,
+        cellTypes: this.cellTypes,
+        rules: this.rules
+      } as WorkerMessage).toJSON()
     );
     this.$store.commit("simulation/setStatus", "");
   }
 
   runSimulation() {
     this.$store.commit("simulation/setStatus", "running");
-    this.worker.postMessage(JSON.stringify({ action: "run" }));
+    this.worker.postMessage(
+      new WorkerMessage({
+        action: "run"
+      } as WorkerMessage).toJSON()
+    );
   }
 
   stopSimulation() {
@@ -96,7 +112,9 @@ export default class SimulationPage extends Vue {
 
       if (this.status === "running") {
         this.$store.commit("simulation/decrementStepCount");
-        this.worker.postMessage(JSON.stringify({ action: "run" }));
+        this.worker.postMessage(
+          new WorkerMessage({ action: "run" } as WorkerMessage).toJSON()
+        );
       }
     };
     this.init();

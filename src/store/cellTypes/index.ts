@@ -38,6 +38,18 @@ export const cellTypes: Module<CellTypeState, RootState> = {
     },
     names(state) {
       return state.cellTypes.map(ct => ct.name);
+    },
+    nameFromId: (state) => (id: number): string => {
+      return state.cellTypes
+        .filter(ct => ct.id === id)
+        .map(ct => ct.name)
+      [0];
+    },
+    idFromName: (state) => (name: string): number => {
+      return state.cellTypes
+        .filter(ct => ct.name === name)
+        .map(ct => ct.id)
+      [0];
     }
   },
   mutations: {
