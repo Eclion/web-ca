@@ -118,10 +118,16 @@ const BC_CASES: CaseSpec[] = [
   { dishSize: 24, initialCells: 180, steps: 8, mean: 1, pMesen: 40, seed: 42 },
   { dishSize: 24, initialCells: 240, steps: 10, mean: 1, pMesen: 95, seed: 12345 },
   { dishSize: 20, initialCells: 130, steps: 7, mean: 1, pMesen: 50, seed: 7 },
+  // Larger dish + more steps to stress the growing active bounding box (§5.3).
+  { dishSize: 48, initialCells: 500, steps: 14, mean: 1, pMesen: 30, seed: 99 },
+];
+
+const A_LARGE: CaseSpec[] = [
+  { dishSize: 48, initialCells: 500, steps: 14, mean: 1, pMesen: 0, seed: 99 },
 ];
 
 describe('WASM core vs TS oracle — differential test (all models)', () => {
-  for (const c of A_CASES) {
+  for (const c of [...A_CASES, ...A_LARGE]) {
     it(`Model A byte-identical: dish ${c.dishSize}, ${c.steps} steps, seed ${c.seed}`, () => {
       assertByteIdentical(paramsFor('A', c));
     });
