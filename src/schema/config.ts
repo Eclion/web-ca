@@ -161,6 +161,26 @@ export function resolveSim(
   };
 }
 
+/** Parse + validate an imported config JSON string against the schema. */
+export function parseConfig(
+  json: string,
+): { ok: true; config: RunConfig } | { ok: false; error: string } {
+  let data: unknown;
+  try {
+    data = JSON.parse(json);
+  } catch {
+    return { ok: false, error: 'Not valid JSON' };
+  }
+  const result = RunConfigSchema.safeParse(data);
+  if (!result.success) {
+    const msg = result.error.issues
+      .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('; ');
+    return { ok: false, error: msg };
+  }
+  return { ok: true, config: result.data };
+}
+
 export const TREATMENT_LABELS: Record<Treatment, string> = {
   WT: 'WT',
   TRAIL: 'TRAIL',

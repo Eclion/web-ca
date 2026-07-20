@@ -84,6 +84,7 @@ interface SimState {
   setConfig: (patch: Partial<RunConfig>) => void;
   setModel: (model: Model) => void;
   setTreatments: (treatments: Treatment[]) => void;
+  loadConfig: (config: RunConfig) => void;
   setViewStep: (step: number) => void;
   run: () => Promise<void>;
   pause: () => void;
@@ -211,6 +212,8 @@ export const useSimStore = create<SimState>((set, get) => {
           treatments: treatments.length ? treatments : get().config.treatments,
         },
       }),
+
+    loadConfig: (config) => invalidate({ config }),
 
     setViewStep: (step) => {
       const { currentStep } = get();
