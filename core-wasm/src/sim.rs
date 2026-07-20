@@ -6,8 +6,15 @@
 //! born-type tie-break.
 
 use crate::grid::seed_colony;
-use crate::neighbors::{compute_column_counts, compute_live_counts, index};
+use crate::neighbors::{compute_column_counts_region, compute_live_counts_region, index};
 use crate::rng::Pcg32;
+
+/// Cells beyond the colony's tight bounding box that a single step can still
+/// touch: births / M-moves happen at most one cell outside any live cell.
+const ACTIVE_MARGIN: usize = 1;
+
+/// Inclusive active rectangle `(x0, x1, y0, y1)` (full height).
+type Rect = (usize, usize, usize, usize);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Model {
@@ -50,16 +57,51 @@ pub struct Simulation {
     box_scratch: Vec<u16>,
     col_e: Vec<u16>,
     col_m: Vec<u16>,
+    /// Colony bounding box + margin; `None` once the dish is empty (PRD §5.3).
+    active: Option<Rect>,
     nb_cells: Vec<u32>,
     m_percents: Vec<f64>,
     ratio: f64,
     current_step: usize,
 }
 
+/// Tight bounding box of non-empty cells within `search` (all z), if any.
+fn bounding_box(grid: &[u8], w: usize, h: usize, d: usize, search: Rect) -> Option<Rect> {
+    let (sx0, sx1, sy0, sy1) = search;
+    let (mut x0, mut y0, mut x1, mut y1) = (usize::MAX, usize::MAX, 0usize, 0usize);
+    let mut found = false;
+    for z in 0..d {
+        for y in sy0..=sy1 {
+            for x in sx0..=sx1 {
+                if grid[index(x, y, z, w, h)] != 0 {
+                    found = true;
+                    x0 = x0.min(x);
+                    x1 = x1.max(x);
+                    y0 = y0.min(y);
+                    y1 = y1.max(y);
+                }
+            }
+        }
+    }
+    found.then_some((x0, x1, y0, y1))
+}
+
+/// Expand a bounding box by `ACTIVE_MARGIN`, clamped to the grid.
+fn expand(bb: Rect, w: usize, h: usize) -> Rect {
+    let (x0, x1, y0, y1) = bb;
+    (
+        x0.saturating_sub(ACTIVE_MARGIN),
+        (x1 + ACTIVE_MARGIN).min(w - 1),
+        y0.saturating_sub(ACTIVE_MARGIN),
+        (y1 + ACTIVE_MARGIN).min(h - 1),
+    )
+}
+
 impl Simulation {
     pub fn new(cfg: SimConfig) -> Self {
-        let n = cfg.dish_size * cfg.dish_size * cfg.dish_height;
-        let wh = cfg.dish_size * cfg.dish_size;
+        let (dish_size, dish_height) = (cfg.dish_size, cfg.dish_height);
+        let n = dish_size * dish_size * dish_height;
+        let wh = dish_size * dish_size;
         let mut rng = Pcg32::with_seed(cfg.seed);
         let mut cur = vec![0u8; n];
 
@@ -89,6 +131,7 @@ impl Simulation {
             box_scratch: vec![0u16; wh],
             col_e: vec![0u16; wh],
             col_m: vec![0u16; wh],
+            active: None,
             nb_cells: Vec::with_capacity(cfg.steps + 1),
             m_percents: Vec::with_capacity(cfg.steps + 1),
             ratio: 0.0,
@@ -97,20 +140,33 @@ impl Simulation {
             rng,
             cfg,
         };
+        // Initial bounding box: the seeded colony lives only in layer 0, but
+        // scan the whole grid once to be safe.
+        let full = (0, dish_size - 1, 0, dish_size - 1);
+        sim.active = bounding_box(&sim.cur, dish_size, dish_size, dish_height, full)
+            .map(|bb| expand(bb, dish_size, dish_size));
         sim.record();
         sim.ratio = sim.nb_cells[0] as f64 / sim.cfg.initial_cells;
         sim
     }
 
-    /// Count `(total_live, m_count)` over the current grid.
+    /// Count `(total_live, m_count)` — only the active region can hold cells.
     fn count(&self) -> (u32, u32) {
+        let (w, h, d) = (self.cfg.dish_size, self.cfg.dish_size, self.cfg.dish_height);
+        let Some((x0, x1, y0, y1)) = self.active else {
+            return (0, 0);
+        };
         let mut m = 0u32;
         let mut e = 0u32;
-        for &v in &self.cur {
-            match v {
-                1 => m += 1,
-                2 => e += 1,
-                _ => {}
+        for z in 0..d {
+            for y in y0..=y1 {
+                for x in x0..=x1 {
+                    match self.cur[index(x, y, z, w, h)] {
+                        1 => m += 1,
+                        2 => e += 1,
+                        _ => {}
+                    }
+                }
             }
         }
         (m + e, m)
@@ -134,63 +190,90 @@ impl Simulation {
         let (w, h, d) = (self.cfg.dish_size, self.cfg.dish_size, self.cfg.dish_height);
 
         self.next.copy_from_slice(&self.cur);
-        compute_live_counts(
-            &self.cur,
-            w,
-            h,
-            d,
-            &mut self.row_x,
-            &mut self.col_y,
-            &mut self.l,
-        );
-        if self.cfg.model != Model::A {
-            compute_column_counts(
+
+        if let Some((x0, x1, y0, y1)) = self.active {
+            compute_live_counts_region(
                 &self.cur,
                 w,
                 h,
                 d,
-                &mut self.e_flat,
-                &mut self.m_flat,
-                &mut self.box_scratch,
-                &mut self.col_e,
-                &mut self.col_m,
+                x0,
+                x1,
+                y0,
+                y1,
+                &mut self.row_x,
+                &mut self.col_y,
+                &mut self.l,
             );
-        }
-        let order = self.rng.permutation(w * h);
+            if self.cfg.model != Model::A {
+                compute_column_counts_region(
+                    &self.cur,
+                    w,
+                    h,
+                    d,
+                    x0,
+                    x1,
+                    y0,
+                    y1,
+                    &mut self.e_flat,
+                    &mut self.m_flat,
+                    &mut self.box_scratch,
+                    &mut self.col_e,
+                    &mut self.col_m,
+                );
+            }
 
-        match self.cfg.model {
-            Model::A => self.step_model_a(&order),
-            Model::B => self.step_model_b(&order),
-            Model::C => self.step_model_c(&order),
+            match self.cfg.model {
+                // Model A is order-independent and draws no RNG, so it skips the
+                // (whole-dish) permutation entirely — a pure win. Its result is
+                // still byte-identical to the oracle (which does permute).
+                Model::A => self.step_model_a(x0, x1, y0, y1),
+                // B/C need the exact whole-dish permutation to keep the movement
+                // RNG in lockstep with the oracle; out-of-region cells are empty
+                // no-ops (no birth, no rp draw) and are skipped.
+                Model::B => {
+                    let order = self.rng.permutation(w * h);
+                    self.step_model_b(&order, x0, x1, y0, y1);
+                }
+                Model::C => {
+                    let order = self.rng.permutation(w * h);
+                    self.step_model_c(&order, x0, x1, y0, y1);
+                }
+            }
+
+            // Cells can only have changed within the active region, so rescan
+            // just that rectangle for the next step's bounding box.
+            self.active =
+                bounding_box(&self.next, w, h, d, (x0, x1, y0, y1)).map(|bb| expand(bb, w, h));
         }
+        // else: the dish is empty and stays empty — nothing to do.
 
         std::mem::swap(&mut self.cur, &mut self.next);
         self.current_step += 1;
         self.record();
     }
 
-    fn step_model_a(&mut self, order: &[u32]) {
+    fn step_model_a(&mut self, x0: usize, x1: usize, y0: usize, y1: usize) {
         let (w, h, d) = (self.cfg.dish_size, self.cfg.dish_size, self.cfg.dish_height);
         let r = self.cfg.rules;
-        for &col in order {
-            let col = col as usize;
-            let x = col % w;
-            let y = col / w;
-            for z in 0..d {
-                let idx = index(x, y, z, w, h);
-                let ln = i64::from(self.l[idx]); // inclusive live count
-                match self.cur[idx] {
-                    0 => {
-                        let born = ln >= i64::from(r.birth_min) && ln <= i64::from(r.birth_max);
-                        self.next[idx] = if born { 2 } else { 0 };
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                for z in 0..d {
+                    let idx = index(x, y, z, w, h);
+                    let ln = i64::from(self.l[idx]); // inclusive live count
+                    match self.cur[idx] {
+                        0 => {
+                            let born = ln >= i64::from(r.birth_min) && ln <= i64::from(r.birth_max);
+                            self.next[idx] = if born { 2 } else { 0 };
+                        }
+                        2 => {
+                            let s = ln - 1; // exclude self
+                            let survives =
+                                s >= i64::from(r.survival_min) && s <= i64::from(r.survival_max);
+                            self.next[idx] = if survives { 2 } else { 0 };
+                        }
+                        _ => {}
                     }
-                    2 => {
-                        let s = ln - 1; // exclude self
-                        let survives =
-                            s >= i64::from(r.survival_min) && s <= i64::from(r.survival_max);
-                        self.next[idx] = if survives { 2 } else { 0 };
-                    }
-                    _ => {}
                 }
             }
         }
@@ -198,13 +281,16 @@ impl Simulation {
 
     /// Model B: E survives → M / else dies; empty → born (type by column tie-break);
     /// M → moves to an empty neighbor, or converts to E when trapped.
-    fn step_model_b(&mut self, order: &[u32]) {
+    fn step_model_b(&mut self, order: &[u32], x0: usize, x1: usize, y0: usize, y1: usize) {
         let (w, h, d) = (self.cfg.dish_size, self.cfg.dish_size, self.cfg.dish_height);
         let r = self.cfg.rules;
         for &col in order {
             let col = col as usize;
             let x = col % w;
             let y = col / w;
+            if x < x0 || x > x1 || y < y0 || y > y1 {
+                continue; // out-of-region cell: empty no-op, no rp drawn
+            }
             let plane = x + y * w;
             let born_e = self.col_e[plane] > self.col_m[plane];
             for z in 0..d {
@@ -244,13 +330,16 @@ impl Simulation {
     /// Model C (paper rules): under-populated E → M (i); over-crowded M → E (ii);
     /// empty in birth range → born (iii); otherwise M moves (iv) or, if trapped,
     /// converts to E (v).
-    fn step_model_c(&mut self, order: &[u32]) {
+    fn step_model_c(&mut self, order: &[u32], x0: usize, x1: usize, y0: usize, y1: usize) {
         let (w, h, d) = (self.cfg.dish_size, self.cfg.dish_size, self.cfg.dish_height);
         let r = self.cfg.rules;
         for &col in order {
             let col = col as usize;
             let x = col % w;
             let y = col / w;
+            if x < x0 || x > x1 || y < y0 || y > y1 {
+                continue; // out-of-region cell: empty no-op, no rp drawn
+            }
             let plane = x + y * w;
             let born_e = self.col_e[plane] > self.col_m[plane];
             for z in 0..d {

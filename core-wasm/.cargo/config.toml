@@ -1,0 +1,6 @@
+# Enable WebAssembly SIMD (128-bit) for the wasm build so LLVM can vectorise the
+# convolution / counting hot loops (PRD §5.6). Scoped to the wasm target, so
+# native `cargo test` / `clippy` (host target) are unaffected. Baseline wasm
+# SIMD is supported by all current browsers and by Node's V8.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]
