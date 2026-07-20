@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Model, Treatment } from '../core-ts/types.ts';
-import { LARGE_DISH_WARNING, TREATMENT_LABELS } from '../schema/config.ts';
+import { configToJson, download } from '../export/exporters.ts';
+import { LARGE_DISH_WARNING, parseConfig, TREATMENT_LABELS } from '../schema/config.ts';
 import { useSimStore } from '../store/simStore.ts';
 
 const MODELS: Model[] = ['A', 'B', 'C'];
@@ -46,7 +47,10 @@ export function ParametersPanel() {
   const setConfig = useSimStore((s) => s.setConfig);
   const setModel = useSimStore((s) => s.setModel);
   const setTreatments = useSimStore((s) => s.setTreatments);
+  const loadConfig = useSimStore((s) => s.loadConfig);
   const [mPercentText, setMPercentText] = useState(config.mesenchymalPercentages.join(', '));
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const setRule = (k: keyof typeof config.rules, v: number) =>
     setConfig({ rules: { ...config.rules, [k]: v } });
@@ -56,9 +60,48 @@ export function ParametersPanel() {
     setTreatments(has ? config.treatments.filter((x) => x !== t) : [...config.treatments, t]);
   };
 
+  const onImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file
+    if (!file) return;
+    file.text().then((text) => {
+      const result = parseConfig(text);
+      if (result.ok) {
+        loadConfig(result.config);
+        setMPercentText(result.config.mesenchymalPercentages.join(', '));
+        setImportError(null);
+      } else {
+        setImportError(result.error);
+      }
+    });
+  };
+
   return (
     <div className="panel params">
-      <h2>Parameters</h2>
+      <div className="panel-head">
+        <h2>Parameters</h2>
+        <div className="config-io">
+          <button
+            type="button"
+            onClick={() =>
+              download('cancer-automata-config.json', configToJson(config), 'application/json')
+            }
+          >
+            ⬇ Config
+          </button>
+          <button type="button" onClick={() => fileRef.current?.click()}>
+            ⬆ Import
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={onImportFile}
+          />
+        </div>
+      </div>
+      {importError && <p className="warn">Import failed: {importError}</p>}
 
       <label className="field">
         <span>Model</span>

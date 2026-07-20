@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { download, resultsToJson, seriesToCsv } from '../export/exporters.ts';
 import { TREATMENT_COLORS, TREATMENT_LABELS } from '../schema/config.ts';
 import { conditionStats, useSimStore } from '../store/simStore.ts';
 import { OverlayChart, type OverlaySeries } from './OverlayChart.tsx';
@@ -20,7 +21,9 @@ export function ChartsPanel() {
   const dims = useSimStore((s) => s.dims);
   const configSteps = useSimStore((s) => s.config.steps);
   const treatments = useSimStore((s) => s.config.treatments);
+  const config = useSimStore((s) => s.config);
   const stats = useMemo(() => conditionStats(completed), [completed]);
+  const hasResults = completed.length > 0;
 
   const steps = dims?.steps ?? configSteps;
 
@@ -45,7 +48,33 @@ export function ChartsPanel() {
 
   return (
     <div className="panel charts-panel">
-      <h2>Results</h2>
+      <div className="panel-head">
+        <h2>Results</h2>
+        <div className="config-io">
+          <button
+            type="button"
+            disabled={!hasResults}
+            onClick={() =>
+              download('cancer-automata-series.csv', seriesToCsv(completed), 'text/csv')
+            }
+          >
+            ⬇ CSV
+          </button>
+          <button
+            type="button"
+            disabled={!hasResults}
+            onClick={() =>
+              download(
+                'cancer-automata-results.json',
+                resultsToJson(config, completed, stats),
+                'application/json',
+              )
+            }
+          >
+            ⬇ JSON
+          </button>
+        </div>
+      </div>
 
       <div className="chart-legend">
         {treatments.map((t) => (

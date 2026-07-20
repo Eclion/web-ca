@@ -1,3 +1,4 @@
+import { downloadDishPng } from '../export/exporters.ts';
 import { TREATMENT_LABELS } from '../schema/config.ts';
 import { useSimStore } from '../store/simStore.ts';
 import { DishCanvas } from './DishCanvas.tsx';
@@ -9,6 +10,13 @@ export function DishViewport() {
   const following = useSimStore((s) => s.following);
   const setViewStep = useSimStore((s) => s.setViewStep);
   const condition = useSimStore((s) => s.currentCondition);
+  const frames = useSimStore((s) => s.frames);
+  const dims = useSimStore((s) => s.dims);
+
+  const savePng = () => {
+    const grid = frames[viewStep];
+    if (grid && dims) downloadDishPng(grid, dims, `dish_step_${viewStep}.png`);
+  };
 
   return (
     <div className="panel viewport">
@@ -41,6 +49,9 @@ export function DishViewport() {
           step {viewStep} / {currentStep}
           {following ? ' (live)' : ''}
         </span>
+        <button type="button" onClick={savePng} disabled={!dims} title="Save this step as PNG">
+          ⬇ PNG
+        </button>
       </div>
     </div>
   );

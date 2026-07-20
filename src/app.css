@@ -128,6 +128,28 @@ button:disabled {
   letter-spacing: 0.05em;
   color: var(--muted);
 }
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.panel-head h2 {
+  margin-bottom: 0.5rem;
+}
+.config-io {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+.config-io button {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+}
+.scrubber button {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+}
 
 /* --- Forms --- */
 .field {
