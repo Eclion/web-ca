@@ -1,27 +1,60 @@
 /// <reference lib="webworker" />
 import * as Comlink from 'comlink';
-import init, { add, core_version } from '../wasm/core_wasm.js';
+import type { ResolvedRun } from '../schema/config.ts';
+import init, { Simulation } from '../wasm/core_wasm.js';
+
+export interface RunDims {
+  width: number;
+  height: number;
+  depth: number;
+  steps: number;
+}
+
+/** One step's outputs. `grid` is a fresh copy transferred to the main thread. */
+export interface StepFrame {
+  step: number;
+  nbCells: number;
+  mPercent: number;
+  done: boolean;
+  grid: Uint8Array;
+}
+
+export interface SeriesData {
+  nbCells: number[];
+  mPercents: number[];
+  ratio: number;
+}
 
 /**
- * Simulation worker API.
- *
- * M0 scaffold: this exposes only what the end-to-end smoke test needs — WASM
- * initialisation plus the two trivial exports — to prove the
- * Vite → Worker → Comlink → WASM pipeline. The real batch/step API
- * (start/pause/step/seed/config, per-step samples) lands from M4 onward.
+ * Simulation worker API. The heavy compute runs here (off the main thread); the
+ * main thread drives the loop by awaiting `step()` and renders the returned
+ * frames. See PRD §5.6 / §6.
  */
 export interface SimWorkerApi {
-  /** Instantiate the WASM module. Must be called before any other method. */
   ready(): Promise<void>;
-  /** Version banner from the Rust core; proves a WASM call round-trips. */
-  version(): string;
-  /** Trivial add, proves arguments/returns cross the JS↔WASM boundary. */
-  add(a: number, b: number): number;
-  /** True once `crossOriginIsolated`, i.e. COOP/COEP headers took effect. */
+  init(run: ResolvedRun): RunDims & { ratio: number; frame: StepFrame };
+  step(): StepFrame;
+  series(): SeriesData;
   isCrossOriginIsolated(): boolean;
 }
 
 let initialised = false;
+let sim: Simulation | null = null;
+let run: ResolvedRun | null = null;
+
+function frame(step: number, done: boolean): StepFrame {
+  if (!sim) throw new Error('Simulation not initialised');
+  const nb = sim.nb_cells();
+  const mp = sim.m_percents();
+  const grid = sim.grid();
+  return {
+    step,
+    nbCells: nb[nb.length - 1],
+    mPercent: mp[mp.length - 1],
+    done,
+    grid,
+  };
+}
 
 const api: SimWorkerApi = {
   async ready() {
@@ -29,12 +62,54 @@ const api: SimWorkerApi = {
     await init();
     initialised = true;
   },
-  version() {
-    return core_version();
+
+  init(nextRun) {
+    sim?.free();
+    run = nextRun;
+    sim = new Simulation(
+      nextRun.model,
+      nextRun.survivalMin,
+      nextRun.survivalMax,
+      nextRun.birthMin,
+      nextRun.birthMax,
+      nextRun.dishSize,
+      nextRun.dishHeight,
+      nextRun.initialCells,
+      nextRun.steps,
+      nextRun.mean,
+      nextRun.pMesen,
+      nextRun.seed,
+    );
+    const f = frame(0, nextRun.steps === 0);
+    const dims: RunDims = {
+      width: nextRun.dishSize,
+      height: nextRun.dishSize,
+      depth: nextRun.dishHeight,
+      steps: nextRun.steps,
+    };
+    return Comlink.transfer({ ...dims, ratio: sim.ratio, frame: f }, [f.grid.buffer]);
   },
-  add(a, b) {
-    return add(a, b);
+
+  step() {
+    if (!sim || !run) throw new Error('Simulation not initialised');
+    if (sim.currentStep >= run.steps) {
+      const f = frame(sim.currentStep, true);
+      return Comlink.transfer(f, [f.grid.buffer]);
+    }
+    sim.step();
+    const f = frame(sim.currentStep, sim.currentStep >= run.steps);
+    return Comlink.transfer(f, [f.grid.buffer]);
   },
+
+  series() {
+    if (!sim) throw new Error('Simulation not initialised');
+    return {
+      nbCells: Array.from(sim.nb_cells()),
+      mPercents: Array.from(sim.m_percents()),
+      ratio: sim.ratio,
+    };
+  },
+
   isCrossOriginIsolated() {
     return globalThis.crossOriginIsolated === true;
   },
