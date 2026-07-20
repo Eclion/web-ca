@@ -10,8 +10,9 @@ import {
   type RunConfig,
   type SimJob,
 } from '../schema/config.ts';
+import type { Capabilities } from '../worker/capabilities.ts';
 import { createSimWorker } from '../worker/client.ts';
-import type { RunDims, SimWorkerApi, StepFrame } from '../worker/sim.worker.ts';
+import type { BenchmarkResult, RunDims, SimWorkerApi, StepFrame } from '../worker/sim.worker.ts';
 
 export type RunStatus = 'idle' | 'running' | 'paused' | 'done';
 
@@ -34,7 +35,9 @@ async function getProxy(): Promise<Remote<SimWorkerApi>> {
     const { proxy: p } = createSimWorker();
     await p.ready();
     proxy = p;
-    void p.isCrossOriginIsolated().then((coi) => useSimStore.setState({ coi }));
+    void p
+      .capabilities()
+      .then((caps) => useSimStore.setState({ capabilities: caps, coi: caps.crossOriginIsolated }));
   }
   return proxy;
 }
@@ -73,6 +76,9 @@ interface SimState {
 
   stepsPerSec: number;
   coi: boolean;
+  capabilities: Capabilities | null;
+  benchResult: BenchmarkResult | null;
+  benchRunning: boolean;
   error: string | null;
 
   setConfig: (patch: Partial<RunConfig>) => void;
@@ -83,6 +89,7 @@ interface SimState {
   pause: () => void;
   stepOnce: () => Promise<void>;
   reset: () => Promise<void>;
+  benchmark: () => Promise<void>;
 }
 
 export const useSimStore = create<SimState>((set, get) => {
@@ -190,6 +197,9 @@ export const useSimStore = create<SimState>((set, get) => {
     following: true,
     stepsPerSec: 0,
     coi: false,
+    capabilities: null,
+    benchResult: null,
+    benchRunning: false,
     error: null,
 
     setConfig: (patch) => invalidate({ config: { ...get().config, ...patch } }),
@@ -275,6 +285,22 @@ export const useSimStore = create<SimState>((set, get) => {
         set({ status: 'paused' });
       } catch (e) {
         set({ error: String(e) });
+      }
+    },
+
+    benchmark: async () => {
+      if (get().benchRunning || get().status === 'running') return;
+      runToken++; // stop any in-flight run; the bench uses a throwaway sim
+      set({ benchRunning: true, status: 'idle', error: null });
+      try {
+        const p = await getProxy();
+        const jobs = buildJobs(get().config);
+        const result = await p.benchmark(jobs[0].run);
+        set({ benchResult: result });
+      } catch (e) {
+        set({ error: String(e) });
+      } finally {
+        set({ benchRunning: false, initedFor: null });
       }
     },
   };
