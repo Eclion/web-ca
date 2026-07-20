@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`dish render regression > Model A final frame 1`] = `
+{
+  "black": 554,
+  "green": 470,
+  "hash": 1166362765,
+  "red": 0,
+}
+`;
+
+exports[`dish render regression > Model B final frame (with M cells) 1`] = `
+{
+  "black": 110,
+  "green": 2,
+  "hash": 2312803589,
+  "red": 912,
+}
+`;
+
+exports[`dish render regression > Model C final frame (with M cells) 1`] = `
+{
+  "black": 39,
+  "green": 983,
+  "hash": 2798437204,
+  "red": 2,
+}
+`;
