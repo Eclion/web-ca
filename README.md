@@ -8,11 +8,12 @@ The compute core is **Rust → WebAssembly** running in a **Web Worker**; the UI
 **React 19 + TypeScript** built with **Vite 8**. See
 [`Cancer-AutoMata-SPA-PRD.md`](./Cancer-AutoMata-SPA-PRD.md) for the full spec.
 
-> **Status:** Milestone **M5** complete — the app runs interactive **batches**:
-> pick a model, treatments, M% values and repeats, Run, and watch the 2D dish
-> plus overlaid per-treatment population/M% curves, with a per-condition results
-> table and a scrubber to replay any step. SIMD/bounded-region and export come
-> in M6–M7. See the [CHANGELOG](./CHANGELOG.md) and PRD §11 for the plan.
+> **Status:** Milestone **M6** complete — interactive **batches** with an
+> optimized core: a bounded active region skips empty dish space (byte-identical
+> to the reference), a SIMD wasm build, capability detection, and a Benchmark
+> button. Pick a model, treatments, M% values and repeats, Run, and watch the 2D
+> dish plus overlaid per-treatment curves. Export/polish is M7. See the
+> [CHANGELOG](./CHANGELOG.md) and PRD §11 for the plan.
 
 ## Prerequisites
 

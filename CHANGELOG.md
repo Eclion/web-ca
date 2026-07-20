@@ -6,6 +6,28 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M6 — Bounded active region + SIMD
+
+- **Bounded active region (PRD §5.3):** the core now tracks the colony's tight
+  bounding box (+1-cell margin) and runs the convolution, column counts, fate
+  kernel, and population count only inside it — instead of scanning the whole
+  dish every step. Added `_region` variants of the convolutions
+  (`compute_live_counts_region` / `compute_column_counts_region`) that restrict
+  the output rectangle; each is bit-identical to the full computation inside it
+  (Rust test) . Model A skips the whole-dish permutation entirely (order-
+  independent, draws no RNG); Models B/C keep the exact permutation for movement
+  RNG parity and skip out-of-region no-op cells. **Differential tests remain
+  byte-identical for all three models**, including new larger-dish cases.
+- **SIMD build (PRD §5.6):** `core-wasm/.cargo/config.toml` enables
+  `target-feature=+simd128` for the wasm target (host `cargo test`/`clippy`
+  unaffected); differential tests confirm results are unchanged.
+- **Capability detection:** the worker reports SIMD / threads / cross-origin
+  isolation; the top bar shows `SIMD · COI: yes`. (Multi-threading itself is
+  deferred — the movement pass is inherently sequential; detection is in place.)
+- **Benchmark mode (PRD §10):** a top-bar Benchmark button runs a fixed timed
+  simulation and reports steps/s and Mcell-updates/s (≈405 steps/s, 65 Mcell/s
+  for the default 200² run).
+
 ### M5 — Batch + treatments
 
 - Runs are now batches: `RunConfig` gains `treatments[]`,
