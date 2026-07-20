@@ -6,6 +6,29 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M2 — WASM core, Model A
+
+- Implemented the Rust/WASM compute core for Model A (`core-wasm/src/`):
+  - `rng.rs` — `Pcg32` ported to native `u64`/`u32` wrapping arithmetic;
+    validated against the canonical reference vector and, via new debug exports
+    (`pcg32_sequence` / `pcg32_default_sequence` / `pcg32_permutation`), proven
+    byte-identical to the TS oracle's PRNG.
+  - `grid.rs` — colony seeding with the same f64 expressions and RNG-draw
+    discipline as `seedColony`.
+  - `neighbors.rs` — separable 3-pass box convolution (PRD §5.2) with per-axis
+    border clamping; equals a brute-force 3×3×3 count exactly. Buffers are
+    preallocated and reused each step.
+  - `sim.rs` — double-buffered `Simulation` with the Model A fate kernel,
+    population/M%/ratio series, step/run driving.
+  - `lib.rs` — `wasm-bindgen` `Simulation` class (plus the retained M0 smoke
+    exports).
+- **Differential test green (PRD §9):** WASM and the TS oracle produce
+  byte-identical grids at every step and identical `nbCells`/`mPercents`/`ratio`
+  for Model A across multiple dish sizes, seeds, and a degenerate empty dish.
+- 8 native Rust unit tests (RNG, convolution-vs-brute-force, sim determinism)
+  and 8 new Vitest cases (RNG parity + differential runs). `cargo fmt`/`clippy`
+  clean.
+
 ### M1 — TS reference oracle
 
 - Added `@core-ts` (`src/core-ts/`): a literal, un-optimized TypeScript port of
