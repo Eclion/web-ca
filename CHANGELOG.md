@@ -6,6 +6,26 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M7 — Export & polish
+
+- **Export** (`src/export/exporters.ts`): dish **PNG** (native resolution, per
+  step), series **CSV** (long format), results **JSON** (config + per-condition
+  + per-sim series), and **config JSON**. Download buttons live in the dish
+  scrubber (PNG) and the Results panel (CSV/JSON).
+- **Config import/export (Zod)**: export the current config; import a config
+  file validated against `RunConfigSchema` (`parseConfig`), with a readable
+  error on invalid input. Buttons in the Parameters panel.
+- **Render-regression test** (`src/test/render-regression.test.ts`): a
+  deterministic dish snapshot — a fixed run's final grid is projected to RGBA
+  and its pixel signature (E/M/empty counts + FNV hash) is snapshotted, catching
+  projection/engine render changes without browser-screenshot flakiness.
+- **Docs**: expanded README (usage, export/import, testing, deployment,
+  architecture) and [ADR 0001](./docs/adr/0001-rng-parity-and-faithful-quirks.md)
+  documenting the RNG-parity scope and preserved MATLAB quirks.
+- **Static deploy**: `dist/` is backend-free and works without special headers
+  (the grid is transferred via `postMessage`, not `SharedArrayBuffer`); a sample
+  `public/_headers` enables cross-origin isolation where the host supports it.
+
 ### M6 — Bounded active region + SIMD
 
 - **Bounded active region (PRD §5.3):** the core now tracks the colony's tight

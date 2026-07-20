@@ -1,0 +1,8 @@
+# Cross-origin isolation headers (Netlify / Cloudflare Pages format).
+# Optional: the app works without them (the grid is transferred to the main
+# thread via postMessage, not SharedArrayBuffer). They enable cross-origin
+# isolation so `SharedArrayBuffer` — and a future wasm-threads build — become
+# available. Vite copies files in `public/` to the site root at build time.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

@@ -8,12 +8,12 @@ The compute core is **Rust → WebAssembly** running in a **Web Worker**; the UI
 **React 19 + TypeScript** built with **Vite 8**. See
 [`Cancer-AutoMata-SPA-PRD.md`](./Cancer-AutoMata-SPA-PRD.md) for the full spec.
 
-> **Status:** Milestone **M6** complete — interactive **batches** with an
-> optimized core: a bounded active region skips empty dish space (byte-identical
-> to the reference), a SIMD wasm build, capability detection, and a Benchmark
-> button. Pick a model, treatments, M% values and repeats, Run, and watch the 2D
-> dish plus overlaid per-treatment curves. Export/polish is M7. See the
-> [CHANGELOG](./CHANGELOG.md) and PRD §11 for the plan.
+> **Status:** Milestones **M0–M7 complete.** The app runs interactive batch
+> simulations (M% × treatment × repeats) with a live 2D dish, overlaid
+> per-treatment population/M% curves, a per-condition results table, a step
+> scrubber, PNG/CSV/JSON/config export + config import, an optimized Rust/WASM
+> core (bounded active region + SIMD), and a benchmark mode. See the
+> [CHANGELOG](./CHANGELOG.md), the PRD, and [ADR 0001](./docs/adr/0001-rng-parity-and-faithful-quirks.md).
 
 ## Prerequisites
 
@@ -48,29 +48,78 @@ npm install
 `dev`, `build`, and `test` each rebuild the WASM package first (via `pre*`
 scripts), so a clean checkout needs no manual `npm run wasm`.
 
-## Verifying M0 (smoke test)
+## Using the app
 
-`npm run dev` (or `preview`) and open the app. It boots a Web Worker, initialises
-the WASM module over Comlink, and renders:
+`npm run dev` (or `npm run preview`) and open the URL. Then:
 
-- the WASM core version (`core-wasm v0.1.0`),
-- `add(19, 23) = 42` computed in Rust/WASM,
-- **Cross-origin isolated: yes** — confirming the COOP/COEP headers enabled
-  `SharedArrayBuffer`.
+1. **Parameters** (left): pick a model (A/B/C — switching applies its rule/dish
+   defaults), the treatments to run, rules, dish size/height, initial cells,
+   steps, repeats, seed, and (Models B/C) a comma-separated list of mesenchymal
+   percentages (empty ⇒ each treatment's default 2 / 10 / 95).
+2. **Run** (top bar): the batch runs one simulation per (M% × treatment ×
+   repeat). The **dish** (center) shows the live colony — green = epithelial,
+   red = mesenchymal — with pan (drag), zoom (wheel), and a **step scrubber** to
+   replay any captured step. **Charts** (right) overlay one population and one
+   M% curve per simulation, coloured by treatment, with a per-condition results
+   table (survival ratio pS, growth rate).
+3. **Benchmark** runs a fixed timed simulation and reports steps/s and
+   Mcell-updates/s. The top bar also shows the core's SIMD / cross-origin-
+   isolation status.
 
-If all three appear, the Vite + Worker + Comlink + WASM + cross-origin-isolation
-pipeline is working. `npm test` covers the WASM-core half headlessly.
+### Export & import
 
-## Layout
+- **Dish PNG** — the scrubber's `⬇ PNG` saves the viewed step at native
+  resolution (1 cell = 1 pixel).
+- **Series CSV / results JSON** — the Results panel exports the completed
+  batch (long-format CSV; structured JSON with config + per-condition +
+  per-sim series).
+- **Config JSON** — export the current configuration, or `⬆ Import` a config
+  file (validated against the Zod schema; invalid files report why).
+
+## Testing
+
+- `npm test` runs the full Vitest suite: the TS reference-oracle unit tests, the
+  **WASM-vs-oracle differential tests** (byte-identical grids for all three
+  models — the core correctness gate), and a deterministic **dish
+  render-regression** snapshot.
+- `cd core-wasm && cargo test` runs the Rust unit tests (RNG vector, convolution
+  vs brute force, region equivalence, sim determinism).
+
+## Deployment
+
+`npm run build` produces a static `dist/` deployable to any static host — no
+backend. The app does **not** require `SharedArrayBuffer` (the grid is
+transferred to the main thread via `postMessage`), so it works without special
+headers. To enable cross-origin isolation (for a future wasm-threads build),
+serve these response headers, e.g. via the included
+[`public/_headers`](./public/_headers) (Netlify / Cloudflare Pages):
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+The compute core is compiled with WebAssembly SIMD (`+simd128`), supported by all
+current browsers.
+
+## Architecture
 
 ```
 core-wasm/        Rust crate → WebAssembly compute core (wasm-bindgen)
+  src/rng.rs        PCG32 (shared reproducibility contract)
+  src/grid.rs       colony seeding
+  src/neighbors.rs  separable convolution + column planes (+ region variants)
+  src/sim.rs        Simulation: bounded active region, fate kernels A/B/C, movement
 src/
-  wasm/           Generated wasm-pack output (git-ignored; rebuilt on demand)
-  worker/         sim.worker.ts (Comlink API) + client.ts (main-thread wrapper)
-  test/           Vitest setup + WASM-core smoke test
-  App.tsx         M0 smoke-test UI
-  main.tsx        React entry
+  core-ts/        pure-TS reference oracle (dev/test only; not shipped)
+  wasm/           generated wasm-pack output (git-ignored; rebuilt on demand)
+  worker/         sim.worker.ts (Comlink API + benchmark) + capabilities.ts
+  schema/         Zod RunConfig, batch job builder, config parse
+  store/          Zustand store + batch run-loop controller
+  render/         grid → RGBA top-down projection
+  export/         PNG / CSV / JSON / config exporters
+  ui/             React components (panel, dish, charts, top bar)
+  test/           differential + render-regression tests
 vite.config.ts    Vite + Vitest config, COOP/COEP headers, worker/wasm wiring
 ```
 
