@@ -157,6 +157,7 @@ button:disabled {
   flex-direction: column;
   gap: 0.2rem;
   margin-bottom: 0.6rem;
+  min-width: 0; /* let grid/flex cells shrink instead of overflowing the panel */
 }
 .field > span {
   color: var(--muted);
@@ -164,6 +165,8 @@ button:disabled {
 }
 input,
 select {
+  width: 100%;
+  min-width: 0; /* number inputs have an intrinsic width that must not overflow */
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
