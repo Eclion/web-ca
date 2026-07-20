@@ -6,6 +6,30 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M1 — TS reference oracle
+
+- Added `@core-ts` (`src/core-ts/`): a literal, un-optimized TypeScript port of
+  the original MATLAB cellular automaton, to serve as the correctness ground
+  truth for differential testing against the WASM core (PRD §9). Not shipped in
+  the app bundle.
+  - `rng.ts` — `Pcg32` (PCG-XSH-RR 64/32), the shared reproducibility contract
+    the Rust core will reimplement bit-for-bit. Verified against the canonical
+    PCG32 reference vector (seed 42, stream 54).
+  - `grid.ts` — flat layer-major grid + faithful colony seeding (one `rand()`
+    per cell, a second only for seeded cells; 1-indexed disk test).
+  - `neighbors.ts` — per-layer E/M counts over the clamped 3×3 window
+    (`calculateNeighbors.m`), plus local-dz and full-column sum helpers.
+  - `fate.ts` — literal ports of `undergoFateModel{A,B,C}` and the sequential
+    M-cell movement pass; preserves the born-type "full-height column" tie-break
+    quirk (PRD §3.2) and Model A's E-only neighbor count.
+  - `simulate.ts` — `simulateCancer.m` main loop: seeded random column order,
+    threaded `next` buffer, `ratio`/`nbCells`/`Mpercents` series, snapshots.
+- 31 Vitest cases: RNG reference vector + determinism, brute-force neighbor
+  property test, hand-computed Conway blinker, Model B/C rule-by-rule cases, the
+  column tie-break quirk, and full-run determinism.
+- Downloaded the original `.m` sources and ported against them directly rather
+  than from the PRD summary.
+
 ### M0 — Scaffold & headers
 
 - Initialised Vite 8 (Rolldown) + React 19 + TypeScript project at the repo root.
