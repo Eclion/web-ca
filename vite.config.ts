@@ -11,6 +11,9 @@ const crossOriginIsolationHeaders = {
 };
 
 export default defineConfig({
+  // Served from the domain root in dev/preview; the GitHub Pages build sets
+  // VITE_BASE=/web-ca/ so asset + worker URLs resolve under the project subpath.
+  base: process.env.VITE_BASE ?? '/',
   plugins: [react()],
   server: {
     headers: crossOriginIsolationHeaders,
