@@ -85,6 +85,77 @@ pub fn compute_live_counts(
     }
 }
 
+/// 2-D separable 3×3 clamped box sum of `flat` (a `width*height` plane) into
+/// `out`, using `scratch` for the intermediate horizontal pass.
+fn box_2d(flat: &[u16], width: usize, height: usize, scratch: &mut [u16], out: &mut [u16]) {
+    // Horizontal pass (x-1..x+1).
+    for y in 0..height {
+        let base = y * width;
+        for x in 0..width {
+            let mut s = flat[base + x];
+            if x > 0 {
+                s += flat[base + x - 1];
+            }
+            if x + 1 < width {
+                s += flat[base + x + 1];
+            }
+            scratch[base + x] = s;
+        }
+    }
+    // Vertical pass (y-1..y+1).
+    for x in 0..width {
+        for y in 0..height {
+            let idx = x + y * width;
+            let mut s = scratch[idx];
+            if y > 0 {
+                s += scratch[idx - width];
+            }
+            if y + 1 < height {
+                s += scratch[idx + width];
+            }
+            out[idx] = s;
+        }
+    }
+}
+
+/// Compute the **full-height column** E and M totals used by the born-cell type
+/// tie-break in Models B and C (PRD §3.2): for each in-plane position `(x,y)`,
+/// the number of E (resp. M) cells in the clamped 3×3 window summed over *all*
+/// z-layers.
+///
+/// Done in two stages (PRD §5.2): collapse E/M occupancy across z into 2-D
+/// planes `e_flat`/`m_flat`, then a 2-D separable 3×3 box over each. `scratch`,
+/// `e_flat`, `m_flat`, `col_e`, `col_m` are all `width*height` and reused.
+#[allow(clippy::too_many_arguments)]
+pub fn compute_column_counts(
+    cur: &[u8],
+    width: usize,
+    height: usize,
+    depth: usize,
+    e_flat: &mut [u16],
+    m_flat: &mut [u16],
+    scratch: &mut [u16],
+    col_e: &mut [u16],
+    col_m: &mut [u16],
+) {
+    let wh = width * height;
+    for plane in 0..wh {
+        let mut e = 0u16;
+        let mut m = 0u16;
+        for z in 0..depth {
+            match cur[plane + z * wh] {
+                1 => m += 1,
+                2 => e += 1,
+                _ => {}
+            }
+        }
+        e_flat[plane] = e;
+        m_flat[plane] = m;
+    }
+    box_2d(e_flat, width, height, scratch, col_e);
+    box_2d(m_flat, width, height, scratch, col_m);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,6 +173,63 @@ mod tests {
             }
         }
         n
+    }
+
+    /// Brute-force full-column count of `value` in the clamped 3×3 in-plane
+    /// window at `(x,y)`, summed over all z.
+    fn brute_column(
+        cur: &[u8],
+        x: usize,
+        y: usize,
+        value: u8,
+        w: usize,
+        h: usize,
+        d: usize,
+    ) -> u16 {
+        let mut n = 0u16;
+        for xi in x.saturating_sub(1)..=(x + 1).min(w - 1) {
+            for yi in y.saturating_sub(1)..=(y + 1).min(h - 1) {
+                for zi in 0..d {
+                    if cur[index(xi, yi, zi, w, h)] == value {
+                        n += 1;
+                    }
+                }
+            }
+        }
+        n
+    }
+
+    #[test]
+    fn column_counts_equal_brute_force() {
+        use crate::rng::Pcg32;
+        let (w, h, d) = (9usize, 7usize, 3usize);
+        let mut rng = Pcg32::with_seed(555);
+        let mut cur = vec![0u8; w * h * d];
+        for c in cur.iter_mut() {
+            *c = rng.next_bounded(3) as u8;
+        }
+        let mut e_flat = vec![0u16; w * h];
+        let mut m_flat = vec![0u16; w * h];
+        let mut scratch = vec![0u16; w * h];
+        let mut col_e = vec![0u16; w * h];
+        let mut col_m = vec![0u16; w * h];
+        compute_column_counts(
+            &cur,
+            w,
+            h,
+            d,
+            &mut e_flat,
+            &mut m_flat,
+            &mut scratch,
+            &mut col_e,
+            &mut col_m,
+        );
+        for y in 0..h {
+            for x in 0..w {
+                assert_eq!(col_e[x + y * w], brute_column(&cur, x, y, 2, w, h, d));
+                assert_eq!(col_m[x + y * w], brute_column(&cur, x, y, 1, w, h, d));
+            }
+        }
     }
 
     #[test]

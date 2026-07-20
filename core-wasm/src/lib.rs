@@ -56,8 +56,7 @@ pub struct Simulation {
 
 #[wasm_bindgen]
 impl Simulation {
-    /// Construct and seed the initial colony. `model` is `"A"`, `"B"`, or `"C"`
-    /// (only `"A"` is implemented in M2).
+    /// Construct and seed the initial colony. `model` is `"A"`, `"B"`, or `"C"`.
     #[wasm_bindgen(constructor)]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
