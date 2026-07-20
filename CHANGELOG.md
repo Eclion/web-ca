@@ -6,6 +6,26 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M5 — Batch + treatments
+
+- Runs are now batches: `RunConfig` gains `treatments[]`,
+  `mesenchymalPercentages[]`, and `repeats`. `buildJobs` expands them into one
+  simulation per (M% × treatment × repeat) in the source order, using each
+  treatment's default M% when the list is empty and a distinct deterministic
+  seed (`baseSeed + index`) per sim.
+- The store runs the job queue sequentially, streaming the current sim per step
+  (dish + scrubber stay live) while accumulating completed series; batch
+  pause/resume and per-condition aggregation (mean pS / growth over repeats).
+- Charts overlay one line per simulation, coloured by treatment (WT blue /
+  TRAIL red / TR+BIM green); the results table aggregates per condition. The top
+  bar shows `Sim x / N`, completed count, and throughput.
+- Verified in-browser: a 3-treatment batch produces three overlaid curves whose
+  survival ratios track the treatment means (1.003 / 0.593 / 0.049), and
+  `repeats = 2` yields n = 2 per condition with averaged outputs.
+- Fixed an overlay-chart bug where a sim hand-off could freeze a series' colour
+  (uPlot's series set is fixed at creation): the plot now rebuilds on colour
+  signature, and a `currentLive` flag prevents the transient duplicate.
+
 ### M4 — Render & UI
 
 - The engine now reaches the screen: replaced the M0 smoke page with the real
