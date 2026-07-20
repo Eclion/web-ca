@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Model, Treatment } from '../core-ts/types.ts';
 import { LARGE_DISH_WARNING, TREATMENT_LABELS } from '../schema/config.ts';
 import { useSimStore } from '../store/simStore.ts';
@@ -11,7 +12,6 @@ function NumberField(props: {
   onChange: (v: number) => void;
   min?: number;
   max?: number;
-  step?: number;
   disabled?: boolean;
 }) {
   return (
@@ -22,7 +22,6 @@ function NumberField(props: {
         value={props.value}
         min={props.min}
         max={props.max}
-        step={props.step ?? 1}
         disabled={props.disabled}
         onChange={(e) => {
           const v = Number(e.target.value);
@@ -33,13 +32,29 @@ function NumberField(props: {
   );
 }
 
+/** Parse a comma/space separated list of percentages (0..100), ignoring junk. */
+function parsePercentList(raw: string): number[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((t) => Number(t))
+    .filter((n) => Number.isFinite(n) && n >= 0 && n <= 100);
+}
+
 /** Left panel — mirrors the MATLAB parameter UI (PRD §4.1). */
 export function ParametersPanel() {
   const config = useSimStore((s) => s.config);
   const setConfig = useSimStore((s) => s.setConfig);
   const setModel = useSimStore((s) => s.setModel);
+  const setTreatments = useSimStore((s) => s.setTreatments);
+  const [mPercentText, setMPercentText] = useState(config.mesenchymalPercentages.join(', '));
+
   const setRule = (k: keyof typeof config.rules, v: number) =>
     setConfig({ rules: { ...config.rules, [k]: v } });
+
+  const toggleTreatment = (t: Treatment) => {
+    const has = config.treatments.includes(t);
+    setTreatments(has ? config.treatments.filter((x) => x !== t) : [...config.treatments, t]);
+  };
 
   return (
     <div className="panel params">
@@ -56,19 +71,21 @@ export function ParametersPanel() {
         </select>
       </label>
 
-      <label className="field">
-        <span>Treatment</span>
-        <select
-          value={config.treatment}
-          onChange={(e) => setConfig({ treatment: e.target.value as Treatment })}
-        >
+      <fieldset>
+        <legend>Treatments</legend>
+        <div className="checks">
           {TREATMENTS.map((t) => (
-            <option key={t} value={t}>
+            <label key={t} className="check">
+              <input
+                type="checkbox"
+                checked={config.treatments.includes(t)}
+                onChange={() => toggleTreatment(t)}
+              />
               {TREATMENT_LABELS[t]}
-            </option>
+            </label>
           ))}
-        </select>
-      </label>
+        </div>
+      </fieldset>
 
       <fieldset>
         <legend>Rules</legend>
@@ -144,12 +161,11 @@ export function ParametersPanel() {
             onChange={(v) => setConfig({ steps: v })}
           />
           <NumberField
-            label="M % (seed)"
-            value={config.model === 'A' ? 0 : config.pMesen}
-            min={0}
+            label="Repeats"
+            value={config.repeats}
+            min={1}
             max={100}
-            disabled={config.model === 'A'}
-            onChange={(v) => setConfig({ pMesen: v })}
+            onChange={(v) => setConfig({ repeats: v })}
           />
           <NumberField
             label="Seed"
@@ -158,8 +174,23 @@ export function ParametersPanel() {
             onChange={(v) => setConfig({ seed: v })}
           />
         </div>
-        {config.model === 'A' && (
-          <p className="hint">Model A is epithelial-only (M % forced to 0).</p>
+        <label className="field">
+          <span>Mesenchymal % (comma-separated)</span>
+          <input
+            type="text"
+            value={mPercentText}
+            placeholder="empty → defaults 2 / 10 / 95"
+            disabled={config.model === 'A'}
+            onChange={(e) => {
+              setMPercentText(e.target.value);
+              setConfig({ mesenchymalPercentages: parsePercentList(e.target.value) });
+            }}
+          />
+        </label>
+        {config.model === 'A' ? (
+          <p className="hint">Model A is epithelial-only (M % ignored).</p>
+        ) : (
+          <p className="hint">Empty list uses each treatment's default M% (2 / 10 / 95).</p>
         )}
       </fieldset>
     </div>

@@ -175,6 +175,20 @@ legend {
   font-size: 0.72rem;
   margin: 0.2rem 0 0;
 }
+.checks {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text);
+}
+.check input {
+  accent-color: var(--accent);
+}
 .warn {
   color: #e2cf7b;
   font-size: 0.72rem;
@@ -249,9 +263,45 @@ legend {
 }
 
 /* --- Charts + results --- */
+.chart-legend {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
 .chart {
   width: 100%;
   margin-bottom: 0.75rem;
+}
+.dish-caption {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.results thead th {
+  color: var(--muted);
+  font-weight: 500;
+  text-align: right;
+}
+.results thead th:first-child {
+  text-align: left;
+}
+.results .empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 0.75rem;
+}
+.results .swatch {
+  width: 0.6rem;
+  height: 0.6rem;
 }
 .results {
   width: 100%;

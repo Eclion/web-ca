@@ -1,3 +1,4 @@
+import { TREATMENT_LABELS } from '../schema/config.ts';
 import { useSimStore } from '../store/simStore.ts';
 import { DishCanvas } from './DishCanvas.tsx';
 
@@ -7,10 +8,16 @@ export function DishViewport() {
   const viewStep = useSimStore((s) => s.viewStep);
   const following = useSimStore((s) => s.following);
   const setViewStep = useSimStore((s) => s.setViewStep);
+  const condition = useSimStore((s) => s.currentCondition);
 
   return (
     <div className="panel viewport">
       <div className="dish-wrap">
+        {condition && (
+          <div className="dish-caption">
+            {TREATMENT_LABELS[condition.treatment]} · {condition.mPercent}% M
+          </div>
+        )}
         <DishCanvas />
         <div className="legend">
           <span>

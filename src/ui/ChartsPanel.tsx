@@ -1,46 +1,96 @@
 import { useMemo } from 'react';
-import { selectGrowthRate, useSimStore } from '../store/simStore.ts';
-import { UplotChart } from './UplotChart.tsx';
+import { TREATMENT_COLORS, TREATMENT_LABELS } from '../schema/config.ts';
+import { conditionStats, useSimStore } from '../store/simStore.ts';
+import { OverlayChart, type OverlaySeries } from './OverlayChart.tsx';
 
-/** Right panel — population + M% curves and the results table (PRD §4.1). */
+/** Pad a series to `len` with nulls (uPlot renders those as gaps); scale values. */
+function padTo(arr: number[], len: number, scale = 1): (number | null)[] {
+  const out: (number | null)[] = new Array(len).fill(null);
+  for (let i = 0; i < arr.length && i < len; i++) out[i] = arr[i] * scale;
+  return out;
+}
+
+/** Right panel — overlaid per-treatment curves + the per-condition table. */
 export function ChartsPanel() {
-  const nbCells = useSimStore((s) => s.nbCells);
-  const mPercents = useSimStore((s) => s.mPercents);
-  const ratio = useSimStore((s) => s.ratio);
-  const viewStep = useSimStore((s) => s.viewStep);
-  const growthRate = useSimStore(selectGrowthRate);
+  const completed = useSimStore((s) => s.completed);
+  const curNbCells = useSimStore((s) => s.curNbCells);
+  const curMPercents = useSimStore((s) => s.curMPercents);
+  const currentCondition = useSimStore((s) => s.currentCondition);
+  const currentLive = useSimStore((s) => s.currentLive);
+  const dims = useSimStore((s) => s.dims);
+  const configSteps = useSimStore((s) => s.config.steps);
+  const treatments = useSimStore((s) => s.config.treatments);
+  const stats = useMemo(() => conditionStats(completed), [completed]);
 
-  const xs = useMemo(() => Float64Array.from(nbCells, (_, i) => i), [nbCells]);
-  const pop = useMemo(() => Float64Array.from(nbCells), [nbCells]);
-  const mPct = useMemo(() => Float64Array.from(mPercents, (v) => v * 100), [mPercents]);
+  const steps = dims?.steps ?? configSteps;
 
-  const viewPop = nbCells[viewStep] ?? 0;
-  const viewM = (mPercents[viewStep] ?? 0) * 100;
+  const { xs, pop, mPct } = useMemo(() => {
+    const xVals = Array.from({ length: steps + 1 }, (_, i) => i);
+    const popSeries: OverlaySeries[] = [];
+    const mSeries: OverlaySeries[] = [];
+    for (const sim of completed) {
+      const color = TREATMENT_COLORS[sim.condition.treatment];
+      popSeries.push({ data: padTo(sim.nbCells, steps + 1), color });
+      mSeries.push({ data: padTo(sim.mPercents, steps + 1, 100), color });
+    }
+    // The current, not-yet-finalized sim draws live (never duplicating a
+    // completed one, thanks to the `currentLive` flag).
+    if (currentLive && currentCondition && curNbCells.length > 0) {
+      const color = TREATMENT_COLORS[currentCondition.treatment];
+      popSeries.push({ data: padTo(curNbCells, steps + 1), color });
+      mSeries.push({ data: padTo(curMPercents, steps + 1, 100), color });
+    }
+    return { xs: xVals, pop: popSeries, mPct: mSeries };
+  }, [completed, curNbCells, curMPercents, currentCondition, currentLive, steps]);
 
   return (
     <div className="panel charts-panel">
       <h2>Results</h2>
-      <UplotChart title="Population" xs={xs} ys={pop} color="#4ea1ff" yLabel="cells" />
-      <UplotChart title="Mesenchymal %" xs={xs} ys={mPct} color="#ff5a5a" yLabel="M %" />
+
+      <div className="chart-legend">
+        {treatments.map((t) => (
+          <span key={t}>
+            <i className="swatch" style={{ background: TREATMENT_COLORS[t] }} />{' '}
+            {TREATMENT_LABELS[t]}
+          </span>
+        ))}
+      </div>
+
+      <OverlayChart title="Population" xs={xs} series={pop} />
+      <OverlayChart title="Mesenchymal %" xs={xs} series={mPct} />
 
       <table className="results">
+        <thead>
+          <tr>
+            <th>Condition</th>
+            <th>n</th>
+            <th>pS</th>
+            <th>Growth</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr>
-            <th>Survival ratio (pS)</th>
-            <td>{Number.isFinite(ratio) ? ratio.toFixed(4) : '—'}</td>
-          </tr>
-          <tr>
-            <th>Growth rate</th>
-            <td>{Number.isFinite(growthRate) ? growthRate.toFixed(3) : '∞'}</td>
-          </tr>
-          <tr>
-            <th>Population @ step {viewStep}</th>
-            <td>{viewPop.toLocaleString()}</td>
-          </tr>
-          <tr>
-            <th>M % @ step {viewStep}</th>
-            <td>{viewM.toFixed(1)}%</td>
-          </tr>
+          {stats.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="empty">
+                Run a batch to populate results.
+              </td>
+            </tr>
+          ) : (
+            stats.map((s) => (
+              <tr key={`${s.condition.treatment}@${s.condition.mPercent}`}>
+                <th>
+                  <i
+                    className="swatch"
+                    style={{ background: TREATMENT_COLORS[s.condition.treatment] }}
+                  />{' '}
+                  {TREATMENT_LABELS[s.condition.treatment]} · {s.condition.mPercent}% M
+                </th>
+                <td>{s.runs}</td>
+                <td>{s.meanRatio.toFixed(3)}</td>
+                <td>{s.meanGrowth.toFixed(2)}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

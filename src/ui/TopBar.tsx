@@ -12,6 +12,9 @@ export function TopBar() {
   const status = useSimStore((s) => s.status);
   const currentStep = useSimStore((s) => s.currentStep);
   const dims = useSimStore((s) => s.dims);
+  const jobIndex = useSimStore((s) => s.jobIndex);
+  const totalSims = useSimStore((s) => s.totalSims);
+  const completedCount = useSimStore((s) => s.completed.length);
   const stepsPerSec = useSimStore((s) => s.stepsPerSec);
   const coi = useSimStore((s) => s.coi);
   const error = useSimStore((s) => s.error);
@@ -23,6 +26,7 @@ export function TopBar() {
 
   const steps = dims?.steps ?? configSteps;
   const running = status === 'running';
+  const simNo = status === 'done' ? totalSims : Math.min(jobIndex + 1, Math.max(totalSims, 1));
 
   return (
     <header className="topbar">
@@ -49,9 +53,13 @@ export function TopBar() {
       <div className="status">
         <span className={`badge badge-${status}`}>{STATUS_LABEL[status]}</span>
         <span>
+          Sim {simNo} / {totalSims || 1}
+        </span>
+        <span>
           Step {currentStep} / {steps}
         </span>
-        <span>{stepsPerSec > 0 ? `${stepsPerSec.toFixed(1)} steps/s` : '—'}</span>
+        <span>{completedCount} done</span>
+        <span>{stepsPerSec > 0 ? `${stepsPerSec.toFixed(0)} steps/s` : '—'}</span>
         <span title="Cross-origin isolated (SharedArrayBuffer available)">
           COI: {coi ? 'yes' : 'no'}
         </span>
