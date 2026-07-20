@@ -6,6 +6,23 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M3 — WASM core, Models B & C
+
+- Added the full-height **column E/M planes** to `neighbors.rs`
+  (`compute_column_counts`): flatten E/M occupancy across z, then a 2-D
+  separable 3×3 clamped box (PRD §5.2) — used for the born-cell type tie-break.
+  Unit-tested against a brute-force column count.
+- Implemented the **Model B and Model C** fate kernels in `sim.rs`, including
+  the sequential **M-cell movement pass** (`move_or_convert_m`): candidates
+  gathered in x→y→z order, occupancy read from the in-progress `next` buffer for
+  collision avoidance, `rp` drawn on every entry to the movement branch (even
+  when trapped), and target chosen by `round(rp*(count-1))`. Birth no longer
+  clobbers cells an earlier move wrote into.
+- **Differential tests green for all three models (PRD §9):** WASM and the TS
+  oracle are byte-identical at every step (grids + nbCells/mPercents/ratio) for
+  A, B, and C across dish sizes, seeds, and M% values (2/10/95).
+- Added Rust B/C determinism tests; `cargo fmt`/`clippy` clean.
+
 ### M2 — WASM core, Model A
 
 - Implemented the Rust/WASM compute core for Model A (`core-wasm/src/`):
