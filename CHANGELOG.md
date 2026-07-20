@@ -6,6 +6,30 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### M4 — Render & UI
+
+- The engine now reaches the screen: replaced the M0 smoke page with the real
+  single-run application.
+- **Worker**: rewrote `sim.worker.ts` to drive the WASM `Simulation` — `init`
+  seeds and returns step 0 + dims + ratio; `step` advances and returns a frame
+  with the grid as a transferable; `series` returns the full curves.
+- **Config** (`schema/config.ts`): Zod `RunConfig` with validation, model
+  defaults on switch, treatment-mean resolution, and a large-dish warning.
+- **State** (`store/simStore.ts`): Zustand store + run-loop controller
+  (run/pause/step/reset), per-step frame history for the scrubber, throughput,
+  and a growth-rate selector. The loop yields via a macrotask so it keeps
+  running when the tab is backgrounded (rAF throttles there).
+- **Render** (`render/project.ts`): faithful top-down 3D→2D projection (topmost
+  occupied layer wins, per `cellsToRGB`); `DishCanvas` blits it with
+  nearest-neighbor scaling under pan/zoom.
+- **UI**: three-pane layout — parameters panel (model/treatment/rules/dish/sim
+  with model defaults), dish viewport with a step scrubber + legend, uPlot
+  population & M% charts, results table (ratio, growth rate), and a top bar with
+  run controls, progress, throughput, and the cross-origin-isolation indicator.
+- Verified in-browser: Model A renders all-green (E-only), Model B renders
+  red-dominated with E→M conversion, charts stream, the scrubber replays any
+  captured step, and COI is active. Added schema + projection unit tests.
+
 ### M3 — WASM core, Models B & C
 
 - Added the full-height **column E/M planes** to `neighbors.rs`
