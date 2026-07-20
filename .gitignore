@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Rust / wasm-pack
+core-wasm/target/
+
+# Generated WASM package (rebuilt via `npm run wasm`)
+src/wasm/
+
+# Logs & caches
+*.log
+npm-debug.log*
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.local
