@@ -1,13 +1,31 @@
 import type { Remote } from 'comlink';
 import { create } from 'zustand';
-import type { Model } from '../core-ts/types.ts';
-import { applyModelDefaults, defaultConfig, type RunConfig, resolveRun } from '../schema/config.ts';
+import type { Model, Treatment } from '../core-ts/types.ts';
+import {
+  applyModelDefaults,
+  buildJobs,
+  type Condition,
+  conditionKey,
+  defaultConfig,
+  type RunConfig,
+  type SimJob,
+} from '../schema/config.ts';
 import { createSimWorker } from '../worker/client.ts';
-import type { RunDims, SimWorkerApi } from '../worker/sim.worker.ts';
+import type { RunDims, SimWorkerApi, StepFrame } from '../worker/sim.worker.ts';
 
 export type RunStatus = 'idle' | 'running' | 'paused' | 'done';
 
-// The worker proxy and the run-loop token live outside React state.
+/** A finished simulation's series + aggregate outputs. */
+export interface CompletedSim {
+  index: number;
+  condition: Condition;
+  repeatIndex: number;
+  nbCells: number[];
+  mPercents: number[];
+  ratio: number;
+  growthRate: number;
+}
+
 let proxy: Remote<SimWorkerApi> | null = null;
 let runToken = 0;
 
@@ -21,27 +39,45 @@ async function getProxy(): Promise<Remote<SimWorkerApi>> {
   return proxy;
 }
 
+/** Growth rate = last population / min population (∞ if min is 0, 0 if empty). */
+export function growthRate(nb: number[]): number {
+  if (nb.length === 0) return 0;
+  const min = Math.min(...nb);
+  if (min === 0) return Number.POSITIVE_INFINITY;
+  return nb[nb.length - 1] / min;
+}
+
 interface SimState {
   config: RunConfig;
   status: RunStatus;
+
+  // Batch queue.
+  jobs: SimJob[];
+  jobIndex: number;
+  totalSims: number;
+  completed: CompletedSim[];
+  initedFor: RunConfig | null;
+
+  // Current (in-flight) simulation.
   dims: RunDims | null;
-  /** Grid snapshot per step (index = step); enables the scrubber. */
-  frames: Uint8Array[];
-  nbCells: number[];
-  mPercents: number[];
-  ratio: number;
+  currentCondition: Condition | null;
+  /** True while the current sim is active (not yet pushed to `completed`). */
+  currentLive: boolean;
+  frames: Uint8Array[]; // current sim's grid per step (for the scrubber)
+  curNbCells: number[];
+  curMPercents: number[];
+  curRatio: number;
   currentStep: number;
   viewStep: number;
-  /** When true, the viewed step follows the latest computed step. */
   following: boolean;
+
   stepsPerSec: number;
   coi: boolean;
   error: string | null;
-  /** The config the worker was last initialised for (null ⇒ needs (re)init). */
-  initedFor: RunConfig | null;
 
   setConfig: (patch: Partial<RunConfig>) => void;
   setModel: (model: Model) => void;
+  setTreatments: (treatments: Treatment[]) => void;
   setViewStep: (step: number) => void;
   run: () => Promise<void>;
   pause: () => void;
@@ -49,142 +85,234 @@ interface SimState {
   reset: () => Promise<void>;
 }
 
-/** Append one frame to the series and advance the (optionally following) view. */
-function appendFrame(
-  state: SimState,
-  f: { step: number; nbCells: number; mPercent: number; done: boolean; grid: Uint8Array },
-  status: RunStatus,
-  stepsPerSec: number,
-): Partial<SimState> {
-  const frames = state.frames.slice();
-  frames[f.step] = f.grid;
-  return {
-    frames,
-    nbCells: [...state.nbCells, f.nbCells],
-    mPercents: [...state.mPercents, f.mPercent],
-    currentStep: f.step,
-    viewStep: state.following ? f.step : state.viewStep,
-    status: f.done ? 'done' : status,
-    stepsPerSec,
+export const useSimStore = create<SimState>((set, get) => {
+  /** Load job `index` into the worker and reset the current-sim view. */
+  const initJob = async (p: Remote<SimWorkerApi>, index: number): Promise<void> => {
+    const job = get().jobs[index];
+    const res = await p.init(job.run);
+    set({
+      jobIndex: index,
+      currentCondition: job.condition,
+      currentLive: true,
+      dims: { width: res.width, height: res.height, depth: res.depth, steps: res.steps },
+      frames: [res.frame.grid],
+      curNbCells: [res.frame.nbCells],
+      curMPercents: [res.frame.mPercent],
+      curRatio: res.ratio,
+      currentStep: 0,
+      viewStep: 0,
+      following: true,
+    });
   };
-}
 
-export const useSimStore = create<SimState>((set, get) => ({
-  config: defaultConfig(),
-  status: 'idle',
-  dims: null,
-  frames: [],
-  nbCells: [],
-  mPercents: [],
-  ratio: Number.NaN,
-  currentStep: 0,
-  viewStep: 0,
-  following: true,
-  stepsPerSec: 0,
-  coi: false,
-  error: null,
-  initedFor: null,
+  /** Push the finished current sim onto `completed`. */
+  const finalizeCurrent = (): void => {
+    const s = get();
+    if (!s.currentCondition) return;
+    const job = s.jobs[s.jobIndex];
+    set({
+      currentLive: false,
+      completed: [
+        ...s.completed,
+        {
+          index: job.index,
+          condition: s.currentCondition,
+          repeatIndex: job.repeatIndex,
+          nbCells: s.curNbCells,
+          mPercents: s.curMPercents,
+          ratio: s.curRatio,
+          growthRate: growthRate(s.curNbCells),
+        },
+      ],
+    });
+  };
 
-  setConfig: (patch) => {
-    runToken++; // cancel any in-flight run
-    set((s) => ({ config: { ...s.config, ...patch }, status: 'idle', initedFor: null }));
-  },
+  const appendFrame = (f: StepFrame, sps: number): void => {
+    set((s) => {
+      const frames = s.frames.slice();
+      frames[f.step] = f.grid;
+      return {
+        frames,
+        curNbCells: [...s.curNbCells, f.nbCells],
+        curMPercents: [...s.curMPercents, f.mPercent],
+        currentStep: f.step,
+        viewStep: s.following ? f.step : s.viewStep,
+        stepsPerSec: sps,
+      };
+    });
+  };
 
-  setModel: (model) => {
+  /** (Re)build the batch queue and seed the first simulation. */
+  const startBatch = async (): Promise<void> => {
     runToken++;
-    set((s) => ({ config: applyModelDefaults(s.config, model), status: 'idle', initedFor: null }));
-  },
-
-  setViewStep: (step) => {
-    const { currentStep } = get();
-    const clamped = Math.max(0, Math.min(step, currentStep));
-    set({ viewStep: clamped, following: clamped >= currentStep });
-  },
-
-  reset: async () => {
-    runToken++;
-    set({ status: 'idle', error: null, stepsPerSec: 0 });
+    const config = get().config;
+    const jobs = buildJobs(config);
+    set({
+      jobs,
+      jobIndex: 0,
+      totalSims: jobs.length,
+      completed: [],
+      status: 'idle',
+      error: null,
+      stepsPerSec: 0,
+      initedFor: config,
+    });
     try {
       const p = await getProxy();
-      const config = get().config;
-      const res = await p.init(resolveRun(config));
-      set({
-        dims: { width: res.width, height: res.height, depth: res.depth, steps: res.steps },
-        frames: [res.frame.grid],
-        nbCells: [res.frame.nbCells],
-        mPercents: [res.frame.mPercent],
-        ratio: res.ratio,
-        currentStep: 0,
-        viewStep: 0,
-        following: true,
-        status: res.frame.done ? 'done' : 'idle',
-        initedFor: config,
-      });
+      await initJob(p, 0);
     } catch (e) {
       set({ error: String(e), status: 'idle' });
     }
-  },
+  };
 
-  run: async () => {
-    if (get().initedFor !== get().config || !get().dims) await get().reset();
-    if (get().status === 'done' || get().error) return;
+  const invalidate = (patch: Partial<SimState>) => {
+    runToken++;
+    set({ ...patch, status: 'idle', initedFor: null });
+  };
 
-    const token = ++runToken;
-    set({ status: 'running', following: true });
-    const p = await getProxy();
+  return {
+    config: defaultConfig(),
+    status: 'idle',
+    jobs: [],
+    jobIndex: 0,
+    totalSims: 0,
+    completed: [],
+    initedFor: null,
+    dims: null,
+    currentCondition: null,
+    currentLive: false,
+    frames: [],
+    curNbCells: [],
+    curMPercents: [],
+    curRatio: Number.NaN,
+    currentStep: 0,
+    viewStep: 0,
+    following: true,
+    stepsPerSec: 0,
+    coi: false,
+    error: null,
 
-    const t0 = performance.now();
-    const step0 = get().currentStep;
-    try {
-      while (get().status === 'running' && token === runToken) {
-        const { currentStep, dims } = get();
-        if (!dims || currentStep >= dims.steps) {
-          set({ status: 'done' });
-          break;
+    setConfig: (patch) => invalidate({ config: { ...get().config, ...patch } }),
+    setModel: (model) => invalidate({ config: applyModelDefaults(get().config, model) }),
+    setTreatments: (treatments) =>
+      invalidate({
+        config: {
+          ...get().config,
+          treatments: treatments.length ? treatments : get().config.treatments,
+        },
+      }),
+
+    setViewStep: (step) => {
+      const { currentStep } = get();
+      const clamped = Math.max(0, Math.min(step, currentStep));
+      set({ viewStep: clamped, following: clamped >= currentStep });
+    },
+
+    reset: startBatch,
+
+    run: async () => {
+      if (get().initedFor !== get().config || get().jobs.length === 0) await startBatch();
+      if (get().status === 'done' || get().error) return;
+
+      const token = ++runToken;
+      set({ status: 'running', following: true });
+      const p = await getProxy();
+      const t0 = performance.now();
+      let stepped = 0;
+
+      try {
+        while (get().status === 'running' && token === runToken) {
+          const s = get();
+          if (!s.dims) break;
+          if (s.currentStep >= s.dims.steps) {
+            finalizeCurrent();
+            if (s.jobIndex + 1 >= s.jobs.length) {
+              set({ status: 'done' });
+              break;
+            }
+            await initJob(p, s.jobIndex + 1);
+            continue;
+          }
+          const f = await p.step();
+          if (token !== runToken) break;
+          stepped++;
+          appendFrame(f, stepped / ((performance.now() - t0) / 1000 || 1));
+          // Macrotask yield: paints the dish/charts and stays alive when the
+          // tab is backgrounded (rAF is throttled there).
+          await new Promise((r) => setTimeout(r, 0));
+        }
+      } catch (e) {
+        set({ error: String(e), status: 'paused' });
+      }
+    },
+
+    pause: () => {
+      runToken++;
+      if (get().status === 'running') set({ status: 'paused' });
+    },
+
+    stepOnce: async () => {
+      if (get().status === 'running') return;
+      if (get().initedFor !== get().config || get().jobs.length === 0) await startBatch();
+      const s = get();
+      if (!s.dims) return;
+      const token = ++runToken;
+      try {
+        const p = await getProxy();
+        if (s.currentStep >= s.dims.steps) {
+          finalizeCurrent();
+          if (s.jobIndex + 1 >= s.jobs.length) {
+            set({ status: 'done' });
+            return;
+          }
+          await initJob(p, s.jobIndex + 1);
+          set({ status: 'paused' });
+          return;
         }
         const f = await p.step();
-        if (token !== runToken) break; // superseded (reset / config change)
-        const sps = (f.step - step0) / ((performance.now() - t0) / 1000 || 1);
-        set((s) => appendFrame(s, f, 'running', sps));
-        // Yield to the event loop so the dish + charts paint and Pause is
-        // responsive. A macrotask (not rAF) keeps running even when the tab is
-        // backgrounded, where rAF is throttled to a near halt.
-        await new Promise((r) => setTimeout(r, 0));
+        if (token !== runToken) return;
+        appendFrame(f, 0);
+        set({ status: 'paused' });
+      } catch (e) {
+        set({ error: String(e) });
       }
-    } catch (e) {
-      set({ error: String(e), status: 'paused' });
-    }
-  },
+    },
+  };
+});
 
-  pause: () => {
-    runToken++;
-    if (get().status === 'running') set({ status: 'paused' });
-  },
+/** Aggregate stats per condition (mean over repeats), in first-seen order. */
+export interface ConditionStat {
+  condition: Condition;
+  runs: number;
+  meanRatio: number;
+  meanGrowth: number;
+}
 
-  stepOnce: async () => {
-    if (get().status === 'running') return;
-    if (get().initedFor !== get().config || !get().dims) await get().reset();
-    const { currentStep, dims } = get();
-    if (!dims || currentStep >= dims.steps) {
-      set({ status: 'done' });
-      return;
+/**
+ * Aggregate finished sims per condition. Takes the raw `completed` array (not
+ * the store state) so callers can memoize it — returning a fresh array straight
+ * from a zustand selector would trip its snapshot-caching guard.
+ */
+export function conditionStats(completed: CompletedSim[]): ConditionStat[] {
+  const order: string[] = [];
+  const groups = new Map<string, CompletedSim[]>();
+  for (const sim of completed) {
+    const key = conditionKey(sim.condition);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push(key);
     }
-    const token = ++runToken;
-    try {
-      const p = await getProxy();
-      const f = await p.step();
-      if (token !== runToken) return;
-      set((s) => appendFrame(s, f, 'paused', 0));
-    } catch (e) {
-      set({ error: String(e) });
-    }
-  },
-}));
-
-/** Growth rate = last population / min population over the run (0 if empty). */
-export function selectGrowthRate(state: SimState): number {
-  if (state.nbCells.length === 0) return 0;
-  const min = Math.min(...state.nbCells);
-  if (min === 0) return Number.POSITIVE_INFINITY;
-  return state.nbCells[state.nbCells.length - 1] / min;
+    groups.get(key)?.push(sim);
+  }
+  return order.map((key) => {
+    const sims = groups.get(key) as CompletedSim[];
+    const mean = (f: (s: CompletedSim) => number) =>
+      sims.reduce((a, s) => a + f(s), 0) / sims.length;
+    return {
+      condition: sims[0].condition,
+      runs: sims.length,
+      meanRatio: mean((s) => s.ratio),
+      meanGrowth: mean((s) => (Number.isFinite(s.growthRate) ? s.growthRate : 0)),
+    };
+  });
 }
