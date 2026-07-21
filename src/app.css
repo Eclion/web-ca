@@ -146,6 +146,25 @@ button:disabled {
   padding: 0.2rem 0.45rem;
   font-size: 0.72rem;
 }
+/* Collapsible parameters header — shown only on narrow screens. */
+.params-collapse-btn {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.params-collapse-btn:hover {
+  border: none;
+}
+.params-collapse-btn .chevron {
+  color: var(--muted);
+}
 .scrubber button {
   padding: 0.2rem 0.5rem;
   font-size: 0.72rem;
@@ -346,4 +365,48 @@ legend {
 .results td {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Mobile: stack top-down — parameters (collapsible) → dish → curves --- */
+@media (max-width: 768px) {
+  .body {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    overflow-y: auto;
+  }
+  .panel {
+    overflow: visible;
+  }
+  .params,
+  .charts-panel {
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+  }
+  /* Header becomes the collapse toggle; the plain heading is redundant. */
+  .params .panel-head h2 {
+    display: none;
+  }
+  .params-collapse-btn {
+    display: inline-flex;
+  }
+  .params-body.collapsed {
+    display: none;
+  }
+  .viewport {
+    overflow: visible;
+  }
+  .dish-wrap {
+    height: 55vh;
+    min-height: 300px;
+  }
+  .topbar {
+    gap: 0.6rem 1rem;
+  }
+  .status {
+    margin-left: 0;
+    font-size: 0.72rem;
+    gap: 0.6rem;
+  }
 }

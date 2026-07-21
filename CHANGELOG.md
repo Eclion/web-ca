@@ -6,6 +6,16 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ## [Unreleased]
 
+### Responsive layout
+
+- Mobile (≤768px) now stacks top-down — **parameters (collapsible) → dish →
+  curves** — instead of the desktop three-column grid. The parameters panel
+  header becomes a collapse toggle so the dish/curves are reachable without long
+  scrolling; the dish gets a real height and the whole page scrolls as one.
+  Desktop is unchanged.
+- The dish auto-fits to its viewport on layout/orientation changes until the
+  user pans/zooms (then their view sticks; a new run re-fits).
+
 ### M7 — Export & polish
 
 - **Export** (`src/export/exporters.ts`): dish **PNG** (native resolution, per

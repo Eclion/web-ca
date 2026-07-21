@@ -50,6 +50,7 @@ export function ParametersPanel() {
   const loadConfig = useSimStore((s) => s.loadConfig);
   const [mPercentText, setMPercentText] = useState(config.mesenchymalPercentages.join(', '));
   const [importError, setImportError] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const setRule = (k: keyof typeof config.rules, v: number) =>
@@ -79,6 +80,14 @@ export function ParametersPanel() {
   return (
     <div className="panel params">
       <div className="panel-head">
+        <button
+          type="button"
+          className="params-collapse-btn"
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((c) => !c)}
+        >
+          <span className="chevron">{collapsed ? '▸' : '▾'}</span> Parameters
+        </button>
         <h2>Parameters</h2>
         <div className="config-io">
           <button
@@ -103,139 +112,141 @@ export function ParametersPanel() {
       </div>
       {importError && <p className="warn">Import failed: {importError}</p>}
 
-      <label className="field">
-        <span>Model</span>
-        <select value={config.model} onChange={(e) => setModel(e.target.value as Model)}>
-          {MODELS.map((m) => (
-            <option key={m} value={m}>
-              Model {m}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <fieldset>
-        <legend>Treatments</legend>
-        <div className="checks">
-          {TREATMENTS.map((t) => (
-            <label key={t} className="check">
-              <input
-                type="checkbox"
-                checked={config.treatments.includes(t)}
-                onChange={() => toggleTreatment(t)}
-              />
-              {TREATMENT_LABELS[t]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Rules</legend>
-        <div className="grid2">
-          <NumberField
-            label="Survival min"
-            value={config.rules.survivalMin}
-            min={0}
-            max={27}
-            onChange={(v) => setRule('survivalMin', v)}
-          />
-          <NumberField
-            label="Survival max"
-            value={config.rules.survivalMax}
-            min={0}
-            max={27}
-            onChange={(v) => setRule('survivalMax', v)}
-          />
-          <NumberField
-            label="Birth min"
-            value={config.rules.birthMin}
-            min={0}
-            max={27}
-            onChange={(v) => setRule('birthMin', v)}
-          />
-          <NumberField
-            label="Birth max"
-            value={config.rules.birthMax}
-            min={0}
-            max={27}
-            onChange={(v) => setRule('birthMax', v)}
-          />
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Dish</legend>
-        <div className="grid2">
-          <NumberField
-            label="Size"
-            value={config.dishSize}
-            min={4}
-            max={550}
-            onChange={(v) => setConfig({ dishSize: v })}
-          />
-          <NumberField
-            label="Height"
-            value={config.dishHeight}
-            min={1}
-            max={8}
-            onChange={(v) => setConfig({ dishHeight: v })}
-          />
-        </div>
-        {config.dishSize > LARGE_DISH_WARNING && (
-          <p className="warn">Large dish ({config.dishSize}²) — runs and memory grow quickly.</p>
-        )}
-      </fieldset>
-
-      <fieldset>
-        <legend>Simulation</legend>
-        <div className="grid2">
-          <NumberField
-            label="Initial cells"
-            value={config.initialCells}
-            min={1}
-            onChange={(v) => setConfig({ initialCells: v })}
-          />
-          <NumberField
-            label="Steps"
-            value={config.steps}
-            min={1}
-            max={2000}
-            onChange={(v) => setConfig({ steps: v })}
-          />
-          <NumberField
-            label="Repeats"
-            value={config.repeats}
-            min={1}
-            max={100}
-            onChange={(v) => setConfig({ repeats: v })}
-          />
-          <NumberField
-            label="Seed"
-            value={config.seed}
-            min={0}
-            onChange={(v) => setConfig({ seed: v })}
-          />
-        </div>
+      <div className={collapsed ? 'params-body collapsed' : 'params-body'}>
         <label className="field">
-          <span>Mesenchymal % (comma-separated)</span>
-          <input
-            type="text"
-            value={mPercentText}
-            placeholder="empty → defaults 2 / 10 / 95"
-            disabled={config.model === 'A'}
-            onChange={(e) => {
-              setMPercentText(e.target.value);
-              setConfig({ mesenchymalPercentages: parsePercentList(e.target.value) });
-            }}
-          />
+          <span>Model</span>
+          <select value={config.model} onChange={(e) => setModel(e.target.value as Model)}>
+            {MODELS.map((m) => (
+              <option key={m} value={m}>
+                Model {m}
+              </option>
+            ))}
+          </select>
         </label>
-        {config.model === 'A' ? (
-          <p className="hint">Model A is epithelial-only (M % ignored).</p>
-        ) : (
-          <p className="hint">Empty list uses each treatment's default M% (2 / 10 / 95).</p>
-        )}
-      </fieldset>
+
+        <fieldset>
+          <legend>Treatments</legend>
+          <div className="checks">
+            {TREATMENTS.map((t) => (
+              <label key={t} className="check">
+                <input
+                  type="checkbox"
+                  checked={config.treatments.includes(t)}
+                  onChange={() => toggleTreatment(t)}
+                />
+                {TREATMENT_LABELS[t]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Rules</legend>
+          <div className="grid2">
+            <NumberField
+              label="Survival min"
+              value={config.rules.survivalMin}
+              min={0}
+              max={27}
+              onChange={(v) => setRule('survivalMin', v)}
+            />
+            <NumberField
+              label="Survival max"
+              value={config.rules.survivalMax}
+              min={0}
+              max={27}
+              onChange={(v) => setRule('survivalMax', v)}
+            />
+            <NumberField
+              label="Birth min"
+              value={config.rules.birthMin}
+              min={0}
+              max={27}
+              onChange={(v) => setRule('birthMin', v)}
+            />
+            <NumberField
+              label="Birth max"
+              value={config.rules.birthMax}
+              min={0}
+              max={27}
+              onChange={(v) => setRule('birthMax', v)}
+            />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Dish</legend>
+          <div className="grid2">
+            <NumberField
+              label="Size"
+              value={config.dishSize}
+              min={4}
+              max={550}
+              onChange={(v) => setConfig({ dishSize: v })}
+            />
+            <NumberField
+              label="Height"
+              value={config.dishHeight}
+              min={1}
+              max={8}
+              onChange={(v) => setConfig({ dishHeight: v })}
+            />
+          </div>
+          {config.dishSize > LARGE_DISH_WARNING && (
+            <p className="warn">Large dish ({config.dishSize}²) — runs and memory grow quickly.</p>
+          )}
+        </fieldset>
+
+        <fieldset>
+          <legend>Simulation</legend>
+          <div className="grid2">
+            <NumberField
+              label="Initial cells"
+              value={config.initialCells}
+              min={1}
+              onChange={(v) => setConfig({ initialCells: v })}
+            />
+            <NumberField
+              label="Steps"
+              value={config.steps}
+              min={1}
+              max={2000}
+              onChange={(v) => setConfig({ steps: v })}
+            />
+            <NumberField
+              label="Repeats"
+              value={config.repeats}
+              min={1}
+              max={100}
+              onChange={(v) => setConfig({ repeats: v })}
+            />
+            <NumberField
+              label="Seed"
+              value={config.seed}
+              min={0}
+              onChange={(v) => setConfig({ seed: v })}
+            />
+          </div>
+          <label className="field">
+            <span>Mesenchymal % (comma-separated)</span>
+            <input
+              type="text"
+              value={mPercentText}
+              placeholder="empty → defaults 2 / 10 / 95"
+              disabled={config.model === 'A'}
+              onChange={(e) => {
+                setMPercentText(e.target.value);
+                setConfig({ mesenchymalPercentages: parsePercentList(e.target.value) });
+              }}
+            />
+          </label>
+          {config.model === 'A' ? (
+            <p className="hint">Model A is epithelial-only (M % ignored).</p>
+          ) : (
+            <p className="hint">Empty list uses each treatment's default M% (2 / 10 / 95).</p>
+          )}
+        </fieldset>
+      </div>
     </div>
   );
 }

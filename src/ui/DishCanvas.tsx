@@ -19,8 +19,23 @@ export function DishCanvas() {
   const rgbaRef = useRef<Uint8ClampedArray | null>(null);
   const viewRef = useRef<View>({ scale: 1, tx: 0, ty: 0 });
   const dragRef = useRef<{ x: number; y: number } | null>(null);
+  // Once the user pans/zooms we stop auto-fitting on resize (so their view
+  // sticks); a new run resets this.
+  const interactedRef = useRef(false);
 
   const dims = useSimStore((s) => s.dims);
+
+  const fitToView = useCallback(() => {
+    const canvas = canvasRef.current;
+    const d = useSimStore.getState().dims;
+    if (!canvas || !d || canvas.clientWidth === 0 || canvas.clientHeight === 0) return;
+    const fit = Math.min(canvas.clientWidth / d.width, canvas.clientHeight / d.height) * 0.95;
+    viewRef.current = {
+      scale: fit,
+      tx: (canvas.clientWidth - d.width * fit) / 2,
+      ty: (canvas.clientHeight - d.height * fit) / 2,
+    };
+  }, []);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -59,7 +74,8 @@ export function DishCanvas() {
     ctx.drawImage(buffer, 0, 0);
   }, []);
 
-  // (Re)create the offscreen buffer and fit the dish to the viewport on resize.
+  // (Re)create the offscreen buffer and fit the dish to the viewport for a new
+  // run (dims change).
   useEffect(() => {
     if (!dims) return;
     const buffer = document.createElement('canvas');
@@ -67,19 +83,10 @@ export function DishCanvas() {
     buffer.height = dims.height;
     bufferRef.current = buffer;
     rgbaRef.current = null;
-
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const fit =
-        Math.min(canvas.clientWidth / dims.width, canvas.clientHeight / dims.height) * 0.95;
-      viewRef.current = {
-        scale: fit,
-        tx: (canvas.clientWidth - dims.width * fit) / 2,
-        ty: (canvas.clientHeight - dims.height * fit) / 2,
-      };
-    }
+    interactedRef.current = false;
+    fitToView();
     draw();
-  }, [dims, draw]);
+  }, [dims, draw, fitToView]);
 
   // Redraw whenever the viewed frame changes.
   useEffect(() => {
@@ -87,17 +94,22 @@ export function DishCanvas() {
     return unsub;
   }, [draw]);
 
+  // On layout/orientation changes, re-fit until the user has taken control.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ro = new ResizeObserver(draw);
+    const ro = new ResizeObserver(() => {
+      if (!interactedRef.current) fitToView();
+      draw();
+    });
     ro.observe(canvas);
     return () => ro.disconnect();
-  }, [draw]);
+  }, [draw, fitToView]);
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
       e.preventDefault();
+      interactedRef.current = true;
       const rect = e.currentTarget.getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
@@ -116,6 +128,7 @@ export function DishCanvas() {
   );
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    interactedRef.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY };
   }, []);
