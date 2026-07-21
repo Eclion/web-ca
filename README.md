@@ -15,6 +15,73 @@ The compute core is **Rust → WebAssembly** running in a **Web Worker**; the UI
 > core (bounded active region + SIMD), and a benchmark mode. See the
 > [CHANGELOG](./CHANGELOG.md), the PRD, and [ADR 0001](./docs/adr/0001-rng-parity-and-faithful-quirks.md).
 
+## How the rules are applied
+
+Every step first counts, for each cell, **N** — the number of live neighbors in
+its 3×3×3 Moore neighborhood, **excluding the cell itself**. A per-cell fate rule
+then applies, depending on the model. The **born-cell type** tie-break compares
+the full-height **column** E vs M totals (summed over all z-layers), not just the
+local window. M-cell **movement** is sequential and collision-avoiding: a target
+must be empty in **both** the previous grid and the in-progress next buffer.
+Cells are updated within the colony's active bounding box (Models B/C in seeded
+random order). These faithful MATLAB quirks are preserved deliberately (see
+[ADR 0001](./docs/adr/0001-rng-parity-and-faithful-quirks.md)).
+
+> `N` comes from a single inclusive 3×3×3 count per step (separable convolution);
+> the engine subtracts the cell's own occupancy — 0 for an empty slot, 1 for a
+> living cell — so every rule tests the same live-neighbor count.
+
+### Model A — epithelial only
+
+```mermaid
+flowchart TB
+    A0{"cell state?"}
+    A0 -->|empty| A1{"N within birth range?"}
+    A1 -->|yes| A2["born E"]
+    A1 -->|no| A3["stays empty"]
+    A0 -->|E| A4{"N within survival range?"}
+    A4 -->|yes| A5["survives · E"]
+    A4 -->|no| A6["dies · empty"]
+```
+
+### Model B — E + M, with movement
+
+```mermaid
+flowchart TB
+    B0{"cell state?"}
+    B0 -->|empty| B1{"N within birth range?"}
+    B1 -->|no| B2["stays empty"]
+    B1 -->|yes| B3{"more E than M in column?"}
+    B3 -->|yes| B4["born E"]
+    B3 -->|no| B5["born M"]
+    B0 -->|E| B6{"N within survival range?"}
+    B6 -->|yes| B7["converts · M"]
+    B6 -->|no| B8["dies · empty"]
+    B0 -->|M| B9{"empty neighbor free in cur and next?"}
+    B9 -->|yes| B10["move → M at neighbor;<br/>old cell empty"]
+    B9 -->|no| B11["trapped · E"]
+```
+
+### Model C — paper rule-set (rules i–v)
+
+```mermaid
+flowchart TB
+    C0{"cell state?"}
+    C0 -->|empty| C1{"N within birth range?"}
+    C1 -->|no| C2["stays empty"]
+    C1 -->|yes| C3{"more E than M in column?"}
+    C3 -->|yes| C4["born E · iii"]
+    C3 -->|no| C5["born M · iii"]
+    C0 -->|E| C6{"N below survivalMin?"}
+    C6 -->|yes| C7["under-populated → M · i"]
+    C6 -->|no| C8["unchanged · E"]
+    C0 -->|M| C9{"N above survivalMax?"}
+    C9 -->|yes| C10["over-crowded → E · ii"]
+    C9 -->|no| C11{"empty neighbor available?"}
+    C11 -->|yes| C12["move → M · iv"]
+    C11 -->|no| C13["trapped → E · v"]
+```
+
 ## Prerequisites
 
 - **Node ≥ 22** and npm.
