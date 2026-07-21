@@ -8,13 +8,17 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
 
 ### Responsive layout
 
-- Mobile (≤768px) now stacks top-down — **parameters (collapsible) → dish →
-  curves** — instead of the desktop three-column grid. The parameters panel
-  header becomes a collapse toggle so the dish/curves are reachable without long
-  scrolling; the dish gets a real height and the whole page scrolls as one.
-  Desktop is unchanged.
+- The top-down stack (**parameters (collapsible) → dish → curves**) now applies
+  at **≤1024px** (was 768px): below the three-column layout's comfortable width
+  the simulation display was being squeezed between the fixed side panels (down
+  to ~240px), so it now takes the full width instead. The parameters panel
+  header becomes a collapse toggle; the dish gets a real height and the whole
+  page scrolls as one. The desktop three-column layout is preserved above
+  1024px, with a `minmax(0, 1fr)` center that can't overflow.
 - The dish auto-fits to its viewport on layout/orientation changes until the
   user pans/zooms (then their view sticks; a new run re-fits).
+- Added a footer: a link to the source paper (left) and a “Vibe coded with
+  Claude” mention (right).
 
 ### M7 — Export & polish
 

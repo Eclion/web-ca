@@ -105,9 +105,32 @@ button:disabled {
 /* --- Body layout --- */
 .body {
   display: grid;
-  grid-template-columns: 280px 1fr 360px;
+  /* The dish (center) takes all remaining width and can shrink to 0 before the
+     side panels do, so the simulation display scales with the viewport. */
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(280px, 360px);
   flex: 1;
   min-height: 0;
+}
+
+/* --- Footer --- */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
 }
 .panel {
   overflow: auto;
@@ -367,8 +390,10 @@ legend {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Mobile: stack top-down — parameters (collapsible) → dish → curves --- */
-@media (max-width: 768px) {
+/* --- Narrow / tablet: stack top-down — parameters (collapsible) → dish →
+   curves — so the simulation display gets the full width instead of being
+   squeezed between the two side panels. --- */
+@media (max-width: 1024px) {
   .body {
     grid-template-columns: 1fr;
     grid-auto-rows: min-content;

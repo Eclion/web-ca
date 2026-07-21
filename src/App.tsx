@@ -22,6 +22,16 @@ export function App() {
         <DishViewport />
         <ChartsPanel />
       </div>
+      <footer className="footer">
+        <a
+          href="https://www.nature.com/articles/s41540-019-0084-5"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Source paper
+        </a>
+        <span>Vibe coded with Claude</span>
+      </footer>
     </div>
   );
 }
