@@ -19,6 +19,9 @@ refer to `Cancer-AutoMata-SPA-PRD.md` §11.
   user pans/zooms (then their view sticks; a new run re-fits).
 - Added a footer: a link to the source paper (left) and a “Vibe coded with
   Claude” mention (right).
+- Removed the **seed** from the parameter panel. The seed is now drawn fresh on
+  every reset / new run, so runs vary; it stays a deterministic knob only for
+  tests (which pass it straight to the compute core).
 
 ### M7 — Export & polish
 

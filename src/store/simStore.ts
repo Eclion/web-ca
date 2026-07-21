@@ -42,6 +42,16 @@ async function getProxy(): Promise<Remote<SimWorkerApi>> {
   return proxy;
 }
 
+/**
+ * A fresh random seed for a run. The seed is not user-configurable in the app —
+ * each reset/new run reseeds so runs vary — it exists only so the compute core
+ * is deterministic for tests. Kept below 2^31 so `seed + jobIndex` stays a valid
+ * u32 across a batch.
+ */
+function randomSeed(): number {
+  return Math.floor(Math.random() * 0x8000_0000);
+}
+
 /** Growth rate = last population / min population (∞ if min is 0, 0 if empty). */
 export function growthRate(nb: number[]): number {
   if (nb.length === 0) return 0;
@@ -153,9 +163,12 @@ export const useSimStore = create<SimState>((set, get) => {
   /** (Re)build the batch queue and seed the first simulation. */
   const startBatch = async (): Promise<void> => {
     runToken++;
-    const config = get().config;
+    // Every reset / new run draws a fresh seed, so runs are not reproducible
+    // from the UI (that's intentional — the seed is a test-only knob).
+    const config = { ...get().config, seed: randomSeed() };
     const jobs = buildJobs(config);
     set({
+      config,
       jobs,
       jobIndex: 0,
       totalSims: jobs.length,

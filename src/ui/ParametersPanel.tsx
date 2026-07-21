@@ -220,12 +220,6 @@ export function ParametersPanel() {
               max={100}
               onChange={(v) => setConfig({ repeats: v })}
             />
-            <NumberField
-              label="Seed"
-              value={config.seed}
-              min={0}
-              onChange={(v) => setConfig({ seed: v })}
-            />
           </div>
           <label className="field">
             <span>Mesenchymal % (comma-separated)</span>
